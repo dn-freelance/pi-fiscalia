@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PI Fiscalia{% endblock %}</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; margin: 0; padding: 20px; color: #333; }
+        header { border-bottom: 1px solid #ccc; margin-bottom: 20px; padding-bottom: 10px; }
+        main { max-width: 800px; margin: 0 auto; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>PI Fiscalia</h1>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
