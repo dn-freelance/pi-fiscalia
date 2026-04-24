@@ -1,21 +1,109 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}PI Fiscalia{% endblock %}</title>
-    <style>
-        body { font-family: sans-serif; line-height: 1.6; margin: 0; padding: 20px; color: #333; }
-        header { border-bottom: 1px solid #ccc; margin-bottom: 20px; padding-bottom: 10px; }
-        main { max-width: 800px; margin: 0 auto; }
-    </style>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <header>
-        <h1>PI Fiscalia</h1>
-    </header>
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon">
+                    <i data-lucide="bell"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-title">Fiscalia</span>
+                    <span class="logo-subtitle">MONITORAMENTO TRIBUTÁRIO</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="/" class="nav-item active">
+                            <i data-lucide="bar-chart-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item">
+                            <i data-lucide="layout-grid"></i>
+                            Informativos Fiscais
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item">
+                            <i data-lucide="tags"></i>
+                            Gerenciar Tags
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="nav-item">
+                            <i data-lucide="settings"></i>
+                            Configurar Fontes
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-widgets">
+                <div class="widget-card">
+                    <h3>Assistência Fiscal</h3>
+                    <p>Centralizamos as mudanças de NCM, ICMS e regras tributárias para facilitar o dia a dia do seu escritório.</p>
+                    <hr>
+                    <div class="widget-footer">
+                        <span class="version-text">VERSÃO 2.4.0</span>
+                        <div class="pagination">
+                            <span class="page active">1</span>
+                            <span class="page">2</span>
+                            <span class="page">3</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="widget-card status-card">
+                    <div class="status-header">
+                        <span class="status-label">STATUS DA REDE</span>
+                        <span class="status-value">Estável</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: 85%;"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <span class="status-dot"></span>
+                    <span class="header-title">Sistemas Operacionais</span>
+                    <span class="badge-new">7 novas</span>
+                </div>
+                <div class="header-right">
+                    <a href="#" class="btn-portal">PORTAL PÚBLICO</a>
+                </div>
+            </header>
+            
+            <div class="page-content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 </html>
