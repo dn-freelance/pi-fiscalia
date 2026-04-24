@@ -54,3 +54,31 @@ O projeto estará disponível em `http://127.0.0.1:8000/`.
 - `feeds/`: App principal para gestão de fontes e itens RSS.
 - `static/`: Arquivos estáticos (CSS, JS, Imagens).
 - `templates/`: Templates HTML globais.
+
+## Como Contribuir
+
+Se você deseja contribuir com o projeto, siga os passos abaixo para criar uma nova branch e abrir um Pull Request:
+
+1. Atualize sua branch principal para garantir que está com o código mais recente:
+   ```bash
+   git checkout main
+   git pull origin main
+   ```
+
+2. Crie uma nova branch para a sua feature ou correção:
+   ```bash
+   git checkout -b minha-nova-feature
+   ```
+
+3. Faça as suas alterações e salve os commits:
+   ```bash
+   git add .
+   git commit -m "feat: adiciona nova funcionalidade X"
+   ```
+
+4. Envie a sua branch para o repositório remoto:
+   ```bash
+   git push origin minha-nova-feature
+   ```
+
+5. Acesse o repositório no GitHub e abra um **Pull Request** da sua branch para a branch principal, descrevendo detalhadamente as mudanças e o contexto da sua contribuição.
