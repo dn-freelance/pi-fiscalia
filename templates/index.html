@@ -1,7 +1,70 @@
 {% extends "base.html" %}
 
+{% block title %}Dashboard | PI Fiscalia{% endblock %}
+
 {% block content %}
-    <h2>Bem-vindo ao PI Fiscalia</h2>
-    <p>Este é um exemplo de Hello World para confirmar que o ambiente Django está configurado corretamente.</p>
-    <p>O portal centralizará feeds RSS sobre informações fiscais em breve.</p>
+<div class="dashboard-header">
+    <h1 class="dashboard-title">Dashboard de Insights Fiscais</h1>
+    <p class="dashboard-subtitle">Visão analítica das mudanças tributárias e seu impacto</p>
+</div>
+
+<div class="stats-grid">
+    <!-- Blue Card -->
+    <div class="stat-card stat-blue">
+        <div class="stat-content">
+            <span class="stat-label">Total de Informativos</span>
+            <span class="stat-value">10</span>
+        </div>
+        <div class="stat-icon">
+            <i data-lucide="bar-chart-2"></i>
+        </div>
+    </div>
+
+    <!-- Orange Card -->
+    <div class="stat-card stat-orange">
+        <div class="stat-content">
+            <span class="stat-label">Não Lidos</span>
+            <span class="stat-value">7</span>
+        </div>
+        <div class="stat-icon">
+            <i data-lucide="eye"></i>
+        </div>
+    </div>
+
+    <!-- Red Card -->
+    <div class="stat-card stat-red">
+        <div class="stat-content">
+            <span class="stat-label">Alta Relevância</span>
+            <span class="stat-value">6</span>
+        </div>
+        <div class="stat-icon">
+            <i data-lucide="alert-triangle"></i>
+        </div>
+    </div>
+
+    <!-- Green Card -->
+    <div class="stat-card stat-green">
+        <div class="stat-content">
+            <span class="stat-label">Vigentes este Mês</span>
+            <span class="stat-value">2</span>
+        </div>
+        <div class="stat-icon">
+            <i data-lucide="calendar"></i>
+        </div>
+    </div>
+</div>
+{% endblock %}
+    </div>
+
+    <!-- Green Card -->
+    <div class="stat-card stat-green">
+        <div class="stat-content">
+            <span class="stat-label">Vigentes este Mês</span>
+            <span class="stat-value">2</span>
+        </div>
+        <div class="stat-icon">
+            <i data-lucide="calendar"></i>
+        </div>
+    </div>
+</div>
 {% endblock %}
