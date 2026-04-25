@@ -1,102 +1,52 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastro de Fonte RSS</title>
-    <style>
-        /* Reset básico e fontes */
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f3f4f6; margin: 0; padding: 20px; }
-
-        /* Estilo do Modal (inspirado na sua imagem) */
-        .modal-card {
-            background: #ffffff;
-            max-width: 450px;
-            margin: 50px auto;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-            padding: 24px;
-            position: relative;
-        }
-
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .header h2 { font-size: 1.25rem; color: #1e293b; margin: 0; }
-        .close-icon { color: #94a3b8; cursor: pointer; font-size: 1.5rem; transition: color 0.2s; }
-        .close-icon:hover { color: #64748b; }
-
-        /* Formulário Estilizado */
-        label { display: block; font-size: 0.875rem; font-weight: 600; color: #64748b; margin-bottom: 8px; }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 16px;
-            margin-bottom: 20px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1rem;
-            color: #1e293b;
-            box-sizing: border-box; /* Garante que o padding não estoure a largura */
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        textarea { resize: vertical; min-height: 100px; }
-
-        /* Botão Salvar (Azul vibrante como na imagem) */
-        .btn-salvar {
-            background-color: #1d4ed8;
-            color: white;
-            border: none;
-            width: 100%;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .btn-salvar:hover { background-color: #1e40af; }
-
-        /* Placeholder */
-        ::placeholder { color: #94a3b8; }
-    </style>
+    <!-- O seu arquivo CSS global único -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
 
-    <div class="modal-card">
-        <div class="header">
-            <h2>Cadastro de Fonte RSS</h2>
-            <span class="close-icon">&times;</span>
+    <div class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Nova Fonte RSS</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+
+            <form>
+                <div class="form-group">
+                    <label>Nome da Fonte</label>
+                    <input type="text" placeholder="Ex: Receita Federal do Brasil">
+                </div>
+
+                <div class="form-group">
+                    <label>URL do Feed RSS</label>
+                    <input type="url" placeholder="https://exemplo.com/rss">
+                </div>
+
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea placeholder="Breve descrição do conteúdo"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select>
+                        <option value="federal">Federal</option>
+                        <option value="estadual">Estadual</option>
+                        <option value="municipal">Municipal</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Adicionar Fonte</button>
+                </div>
+            </form>
         </div>
-
-        <form method="POST">
-            {% csrf_token %} <!-- Essencial para o Django aceitar o POST -->
-            
-            <label for="nome">Nome da Fonte</label>
-            <input type="text" id="nome" name="nome_fonte" placeholder="Ex: Receita Federal" required>
-
-            <label for="url">URL do Feed</label>
-            <input type="url" id="url" name="url_feed" placeholder="https://exemplo.com/rss" required>
-
-            <label for="categoria">Categoria</label>
-            <select id="categoria" name="categoria">
-                <option value="federal">Federal</option>
-                <option value="estadual">Estadual</option>
-                <option value="judicial">Judicial</option>
-                <option value="outros">Outros</option>
-            </select>
-
-            <label for="descricao">Descrição</label>
-            <textarea id="descricao" name="descricao" placeholder="Descrição da fonte"></textarea>
-
-            <button type="submit" class="btn-salvar">Salvar Fonte</button>
-        </form>
     </div>
 
 </body>
