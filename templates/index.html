@@ -1,89 +1,145 @@
-{% extends "base.html" %}
-
-{% block title %}Dashboard | PI Fiscalia{% endblock %}
-
+{% extends "base.html" %} {% block title %}Dashboard | PI Fiscalia{% endblock %}
 {% block content %}
 <div class="dashboard-header">
-    <h1 class="dashboard-title">Dashboard de Insights Fiscais</h1>
-    <p class="dashboard-subtitle">Visão analítica das mudanças tributárias e seu impacto</p>
+  <h1 class="dashboard-title">Dashboard de Insights Fiscais</h1>
+  <p class="dashboard-subtitle">
+    Visão analítica das mudanças tributárias e seu impacto
+  </p>
 </div>
 
 <div class="stats-grid">
-    <!-- Blue Card -->
-    <div class="stat-card stat-blue">
-        <div class="stat-content">
-            <span class="stat-label">Total de Informativos</span>
-            <span class="stat-value">10</span>
-        </div>
-        <div class="stat-icon">
-            <i data-lucide="bar-chart-2"></i>
-        </div>
+  <!-- Blue Card -->
+  <div class="stat-card stat-blue">
+    <div class="stat-content">
+      <span class="stat-label">Total de Informativos</span>
+      <span class="stat-value">10</span>
     </div>
+    <div class="stat-icon">
+      <i data-lucide="bar-chart-2"></i>
+    </div>
+  </div>
 
-    <!-- Orange Card -->
-    <div class="stat-card stat-orange">
-        <div class="stat-content">
-            <span class="stat-label">Não Lidos</span>
-            <span class="stat-value">7</span>
-        </div>
-        <div class="stat-icon">
-            <i data-lucide="eye"></i>
-        </div>
+  <!-- Orange Card -->
+  <div class="stat-card stat-orange">
+    <div class="stat-content">
+      <span class="stat-label">Não Lidos</span>
+      <span class="stat-value">7</span>
     </div>
+    <div class="stat-icon">
+      <i data-lucide="eye"></i>
+    </div>
+  </div>
 
-    <!-- Red Card -->
-    <div class="stat-card stat-red">
-        <div class="stat-content">
-            <span class="stat-label">Alta Relevância</span>
-            <span class="stat-value">6</span>
-        </div>
-        <div class="stat-icon">
-            <i data-lucide="alert-triangle"></i>
-        </div>
+  <!-- Red Card -->
+  <div class="stat-card stat-red">
+    <div class="stat-content">
+      <span class="stat-label">Alta Relevância</span>
+      <span class="stat-value">6</span>
     </div>
+    <div class="stat-icon">
+      <i data-lucide="alert-triangle"></i>
+    </div>
+  </div>
 
-    <!-- Green Card -->
-    <div class="stat-card stat-green">
-        <div class="stat-content">
-            <span class="stat-label">Vigentes este Mês</span>
-            <span class="stat-value">2</span>
-        </div>
-        <div class="stat-icon">
-            <i data-lucide="calendar"></i>
-        </div>
+  <!-- Green Card -->
+  <div class="stat-card stat-green">
+    <div class="stat-content">
+      <span class="stat-label">Vigentes este Mês</span>
+      <span class="stat-value">2</span>
     </div>
+    <div class="stat-icon">
+      <i data-lucide="calendar"></i>
+    </div>
+  </div>
 </div>
 
-<div class="api-test-section" style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-card, #ffffff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 8px;">
-    <h2 style="margin-bottom: 1rem; font-size: 1.25rem; color: var(--text-primary, #1e293b);">Teste de API (Backend)</h2>
-    <p style="margin-bottom: 1rem; color: var(--text-secondary, #64748b);">Clique no botão para enviar uma requisição POST para o backend via Javascript (Fetch API).</p>
-    <button id="btn-teste-api" style="padding: 0.5rem 1rem; background: var(--primary-color, #2563eb); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">
-        Fazer Requisição para /api/exemplo/
-    </button>
-    <div id="api-response" style="margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 4px; border: 1px solid #e2e8f0; font-family: monospace; white-space: pre-wrap; display: none; color: #333;">
-    </div>
+<div
+  class="api-test-section"
+  style="
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-card, #ffffff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+  "
+>
+  <h2
+    style="
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+      color: var(--text-primary, #1e293b);
+    "
+  >
+    Teste de API (Backend)
+  </h2>
+  <p style="margin-bottom: 1rem; color: var(--text-secondary, #64748b)">
+    Clique no botão para enviar uma requisição POST para o backend via
+    Javascript (Fetch API).
+  </p>
+  <button
+    id="btn-teste-api"
+    style="
+      padding: 0.5rem 1rem;
+      background: var(--primary-color, #2563eb);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    "
+  >
+    Fazer Requisição para /api/exemplo/
+  </button>
+  <div
+    id="api-response"
+    style="
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+      font-family: monospace;
+      white-space: pre-wrap;
+      display: none;
+      color: #333;
+    "
+  ></div>
 </div>
+
+<button
+  onclick="
+    document.getElementById('modal-cadastro-fonte').style.display = 'flex'
+  "
+>
+  Nova Fonte RSS
+</button>
 
 <script>
-    document.getElementById('btn-teste-api').addEventListener('click', function() {
-        const responseDiv = document.getElementById('api-response');
-        responseDiv.style.display = 'block';
-        responseDiv.textContent = 'Enviando requisição...';
-        
-        fetch('/api/exemplo/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ mensagem: 'Olá do Frontend! Esta é uma mensagem de teste enviada pela Dashboard.' })
+  document
+    .getElementById("btn-teste-api")
+    .addEventListener("click", function () {
+      const responseDiv = document.getElementById("api-response");
+      responseDiv.style.display = "block";
+      responseDiv.textContent = "Enviando requisição...";
+
+      fetch("/api/exemplo/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mensagem:
+            "Olá do Frontend! Esta é uma mensagem de teste enviada pela Dashboard.",
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          responseDiv.textContent = JSON.stringify(data, null, 2);
         })
-        .then(response => response.json())
-        .then(data => {
-            responseDiv.textContent = JSON.stringify(data, null, 2);
-        })
-        .catch(error => {
-            responseDiv.textContent = 'Erro na requisição: ' + error;
+        .catch((error) => {
+          responseDiv.textContent = "Erro na requisição: " + error;
         });
     });
 </script>
-{% endblock %}
+
+{% include 'modal-cadastro-fontes.html' %} {% endblock %}
