@@ -5,4 +5,5 @@ app_name = 'feeds'
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('api/exemplo/', views.exemplo_post, name='exemplo_post'),
 ]
