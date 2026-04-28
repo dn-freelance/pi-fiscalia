@@ -483,6 +483,10 @@ body {
   position: relative;
 }
 
+.modal-box-sm {
+  max-width: 512px;
+}
+
 /* Cabeçalho */
 .modal-header {
   display: flex;
@@ -535,6 +539,12 @@ body {
   min-height: 60px;
 }
 
+.modal-description {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 /* Rodapé e Botões */
 .modal-footer {
   display: flex;
@@ -560,6 +570,11 @@ body {
 
 .btn-success {
   background-color: #4a5d4e; /* Cor verde aproximada da image_ee3617.png */
+  color: #fff;
+}
+
+.btn-danger {
+  background-color: #e11d2e;
   color: #fff;
 }
 
@@ -615,6 +630,34 @@ body {
 .sources-status svg {
     width: 16px;
     height: 16px;
+}
+
+.feedback-messages {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.feedback-message {
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 12px;
+}
+
+.feedback-message.success {
+    border-color: #bbf7d0;
+    background-color: #f0fdf4;
+    color: #15803d;
+}
+
+.feedback-message.error {
+    border-color: #fecaca;
+    background-color: #fef2f2;
+    color: #b91c1c;
 }
 
 .btn-source-primary {
@@ -743,6 +786,12 @@ body {
     align-items: center;
     gap: 8px;
     flex-shrink: 0;
+}
+
+.source-toggle-form {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
 }
 
 .source-icon-button {

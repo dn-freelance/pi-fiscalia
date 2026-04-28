@@ -106,14 +106,6 @@
   ></div>
 </div>
 
-<button
-  onclick="
-    document.getElementById('modal-cadastro-fonte').style.display = 'flex'
-  "
->
-  Nova Fonte RSS
-</button>
-
 <script>
   document
     .getElementById("btn-teste-api")
@@ -141,5 +133,4 @@
         });
     });
 </script>
-
-{% include 'modal-cadastro-fontes.html' %} {% endblock %}
+{% endblock %}
