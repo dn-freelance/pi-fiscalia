@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Configurar Fontes | PI Fiscalia{% endblock %}
 {% block header_badge %}<span class="badge-new">{{ sources|length }} fontes</span>{% endblock %}
@@ -8,18 +9,26 @@
     <div class="sources-header">
         <div>
             <h1 class="sources-title">Configurar Fontes RSS</h1>
-            <p class="sources-subtitle">Gerencie as fontes de informa&ccedil;&atilde;o que deseja monitorar para receber atualiza&ccedil;&otilde;es sobre mudan&ccedil;as fiscais.</p>
+            <p class="sources-subtitle">Gerencie as fontes de informação que deseja monitorar para receber atualizações sobre mudanças fiscais.</p>
             <div class="sources-status">
                 <i data-lucide="check"></i>
-                <span class="sources-status-text">As altera&ccedil;&otilde;es s&atilde;o salvas automaticamente</span>
+                <span class="sources-status-text">As alterações são salvas automaticamente</span>
             </div>
         </div>
 
-        <a href="#" class="btn-source-primary" title="Adicionar nova fonte">
+        <a href="#" class="btn-source-primary" title="Adicionar nova fonte" data-source-modal-open="div-source-create-modal">
             <i data-lucide="plus"></i>
             <span>Nova Fonte</span>
         </a>
     </div>
+
+    {% if messages %}
+        <div class="feedback-messages">
+            {% for message in messages %}
+                <div class="feedback-message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     <div class="sources-grid">
         {% for source in sources %}
@@ -41,22 +50,50 @@
                 </div>
 
                 <div class="source-actions">
-                    <button type="button" class="source-icon-button" title="Editar fonte" aria-label="Editar {{ source.name }}">
+                    <button
+                        type="button"
+                        class="source-icon-button js-open-edit-source"
+                        title="Editar fonte"
+                        aria-label="Editar {{ source.name }}"
+                        data-source-update-url="{% url 'feeds:update_source' source.id %}"
+                        data-source-name="{{ source.name }}"
+                        data-source-url="{{ source.url }}"
+                        data-source-description="{{ source.description }}"
+                        data-source-category="{{ source.category }}"
+                    >
                         <i data-lucide="pencil"></i>
                     </button>
 
-                    <button type="button" class="source-icon-button danger" title="Excluir fonte" aria-label="Excluir {{ source.name }}">
+                    <button
+                        type="button"
+                        class="source-icon-button danger js-open-delete-source"
+                        title="Excluir fonte"
+                        aria-label="Excluir {{ source.name }}"
+                        data-source-delete-url="{% url 'feeds:delete_source' source.id %}"
+                        data-source-name="{{ source.name }}"
+                    >
                         <i data-lucide="trash-2"></i>
                     </button>
 
-                    <label class="source-toggle" title="Ativar ou desativar fonte">
-                        <input type="checkbox" aria-label="Ativar ou desativar {{ source.name }}" {% if source.active %}checked{% endif %}>
-                        <span></span>
-                    </label>
+                    <form method="post" action="{% url 'feeds:toggle_source_status' source.id %}" class="source-toggle-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="name" value="{{ source.name }}">
+                        <label class="source-toggle" title="Ativar ou desativar fonte">
+                            <input type="checkbox" name="active" class="js-source-status-input" aria-label="Ativar ou desativar {{ source.name }}" {% if source.active %}checked{% endif %}>
+                            <span></span>
+                        </label>
+                    </form>
                 </div>
             </article>
         {% endfor %}
     </div>
 </section>
 
+{% include 'source_create_modal.html' %}
+{% include 'source_edit_modal.html' %}
+{% include 'source_delete_modal.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/configure_sources.js' %}"></script>
 {% endblock %}
