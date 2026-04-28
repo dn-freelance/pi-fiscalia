@@ -30,7 +30,7 @@
             <nav class="sidebar-nav">
                 <ul>
                     <li>
-                        <a href="/" class="nav-item active">
+                        <a href="{% url 'feeds:index' %}" class="nav-item {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
                             <i data-lucide="bar-chart-2"></i>
                             Dashboard
                         </a>
@@ -48,7 +48,7 @@
                         </a>
                     </li>
                     <li>
-                        <a href="#" class="nav-item">
+                        <a href="{% url 'feeds:configure_sources' %}" class="nav-item {% if request.resolver_match.url_name == 'configure_sources' %}active{% endif %}">
                             <i data-lucide="settings"></i>
                             Configurar Fontes
                         </a>
@@ -89,7 +89,7 @@
                 <div class="header-left">
                     <span class="status-dot"></span>
                     <span class="header-title">Sistemas Operacionais</span>
-                    <span class="badge-new">7 novas</span>
+                    {% block header_badge %}<span class="badge-new">7 novas</span>{% endblock %}
                 </div>
                 <div class="header-right">
                     <a href="#" class="btn-portal">PORTAL PÚBLICO</a>
@@ -105,5 +105,6 @@
     <script>
         lucide.createIcons();
     </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

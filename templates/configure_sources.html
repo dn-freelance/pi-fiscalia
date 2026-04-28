@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Configurar Fontes | PI Fiscalia{% endblock %}
+{% block header_badge %}<span class="badge-new">{{ sources|length }} fontes</span>{% endblock %}
+
+{% block content %}
+<section class="sources-page">
+    <div class="sources-header">
+        <div>
+            <h1 class="sources-title">Configurar Fontes RSS</h1>
+            <p class="sources-subtitle">Gerencie as fontes de informa&ccedil;&atilde;o que deseja monitorar para receber atualiza&ccedil;&otilde;es sobre mudan&ccedil;as fiscais.</p>
+            <div class="sources-status">
+                <i data-lucide="check"></i>
+                <span class="sources-status-text">As altera&ccedil;&otilde;es s&atilde;o salvas automaticamente</span>
+            </div>
+        </div>
+
+        <a href="#" class="btn-source-primary" title="Adicionar nova fonte">
+            <i data-lucide="plus"></i>
+            <span>Nova Fonte</span>
+        </a>
+    </div>
+
+    <div class="sources-grid">
+        {% for source in sources %}
+            <article class="source-card {% if not source.active %}is-paused{% endif %}">
+                <div class="source-card-main">
+                    <div class="source-title-row">
+                        <h2>{{ source.name }}</h2>
+                        <div class="source-tags">
+                            <span class="source-pill">{{ source.category }}</span>
+                            {% if source.active %}<span class="source-pill is-active">Ativa</span>{% endif %}
+                        </div>
+                    </div>
+
+                    <p class="source-description">{{ source.description }}</p>
+
+                    <a href="{{ source.url }}" class="source-url" target="_blank" rel="noreferrer">
+                        {{ source.url }}
+                    </a>
+                </div>
+
+                <div class="source-actions">
+                    <button type="button" class="source-icon-button" title="Editar fonte" aria-label="Editar {{ source.name }}">
+                        <i data-lucide="pencil"></i>
+                    </button>
+
+                    <button type="button" class="source-icon-button danger" title="Excluir fonte" aria-label="Excluir {{ source.name }}">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+
+                    <label class="source-toggle" title="Ativar ou desativar fonte">
+                        <input type="checkbox" aria-label="Ativar ou desativar {{ source.name }}" {% if source.active %}checked{% endif %}>
+                        <span></span>
+                    </label>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+
+{% endblock %}
