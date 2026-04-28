@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard | PI Fiscalia{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">{% endblock %}
+
+{% block content %}
+<section class="dashboard-page">
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">Dashboard de Insights Fiscais</h1>
+        <p class="dashboard-subtitle">Visão analítica das mudanças tributárias e seu impacto</p>
+    </div>
+
+    <div class="stats-grid">
+        {% for metric in dashboard_metrics %}
+            <article class="stat-card stat-{{ metric.variant }}">
+                <div class="stat-content">
+                    <span class="stat-label">{{ metric.label }}</span>
+                    <span class="stat-value">{{ metric.value }}</span>
+                </div>
+                <div class="stat-icon">
+                    <i data-lucide="{{ metric.icon }}"></i>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+
+    <section class="api-test-panel" data-api-test-url="{% url 'feeds:exemplo_post' %}">
+        <h2>Teste de API (Backend)</h2>
+        <p>Clique no botão para enviar uma requisição POST para o backend via Javascript (Fetch API).</p>
+        <button id="btn-teste-api" class="btn btn-success" type="button">Fazer Requisição para /api/exemplo/</button>
+        <pre id="api-response" class="api-response" hidden></pre>
+    </section>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/pages/dashboard.js' %}"></script>
+{% endblock %}

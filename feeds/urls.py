@@ -1,15 +1,17 @@
 from django.urls import path
 
-from . import views
+from .views import api, dashboard, sources
 
 app_name = 'feeds'
 
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('api/exemplo/', views.exemplo_post, name='exemplo_post'),
-    path('configurar-fontes/', views.configure_sources, name='configure_sources'),
-    path('configurar-fontes/cadastrar/', views.create_source, name='create_source'),
-    path('configurar-fontes/<int:source_id>/editar/', views.update_source, name='update_source'),
-    path('configurar-fontes/<int:source_id>/excluir/', views.delete_source, name='delete_source'),
-    path('configurar-fontes/<int:source_id>/alternar-status/', views.toggle_source_status, name='toggle_source_status'),
+    path('', dashboard.index, name='index'),
+    
+    path('api/exemplo/', api.exemplo_post, name='exemplo_post'),
+    
+    path('fontes/', sources.index, name='sources'),
+    path('fontes/cadastrar/', sources.create_source, name='create_source'),
+    path('fontes/<int:source_id>/editar/', sources.update_source, name='update_source'),
+    path('fontes/<int:source_id>/excluir/', sources.delete_source, name='delete_source'),
+    path('fontes/<int:source_id>/alternar-status/', sources.toggle_source_status, name='toggle_source_status'),
 ]
