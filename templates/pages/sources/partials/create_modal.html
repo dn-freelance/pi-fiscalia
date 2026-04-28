@@ -1,0 +1,40 @@
+<div class="modal-overlay" id="div-source-create-modal" style="display: none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Nova Fonte RSS</h2>
+            <button type="button" class="close-btn" aria-label="Fechar modal" data-modal-close="div-source-create-modal">&times;</button>
+        </div>
+
+        <form id="form-source-create" method="post" action="{% url 'feeds:create_source' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="input-source-create-name">Nome da Fonte</label>
+                <input id="input-source-create-name" name="name" type="text" placeholder="Ex: Receita Federal do Brasil" required>
+            </div>
+
+            <div class="form-group">
+                <label for="input-source-create-url">URL do Feed RSS</label>
+                <input id="input-source-create-url" name="url" type="url" placeholder="https://exemplo.com/rss" required>
+            </div>
+
+            <div class="form-group">
+                <label for="textarea-source-create-description">Descrição</label>
+                <textarea id="textarea-source-create-description" name="description" placeholder="Breve descrição do conteúdo"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="select-source-create-category">Categoria</label>
+                <select id="select-source-create-category" name="category" required>
+                    {% for category in source_categories %}
+                        <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-modal-close="div-source-create-modal">Cancelar</button>
+                <button type="submit" class="btn btn-success">Adicionar Fonte</button>
+            </div>
+        </form>
+    </div>
+</div>

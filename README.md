@@ -52,8 +52,53 @@ O projeto estará disponível em `http://127.0.0.1:8000/`.
 ## Estrutura do Projeto
 - `config/`: Configurações principais do Django.
 - `feeds/`: App principal para gestão de fontes e itens RSS.
+- `feeds/urls.py`: URLs públicas e nomes internos de rotas do app principal.
+- `feeds/views/`: Views separadas por página.
+- `feeds/data/`: Dados temporários e catálogos usados até a criação dos models.
 - `static/`: Arquivos estáticos (CSS, JS, Imagens).
+- `static/css/components/`: Estilos reutilizáveis, como botões, formulários, mensagens e modais.
+- `static/css/layouts/`: Estilos da estrutura principal da aplicação.
+- `static/css/pages/`: Estilos específicos de cada página.
+- `static/js/app.js`: Comportamentos globais.
+- `static/js/pages/`: Scripts específicos de cada página.
 - `templates/`: Templates HTML globais.
+- `templates/layouts/`: Partes estruturais do layout, como sidebar.
+- `templates/pages/`: Templates organizados por página.
+
+## Padrões do Projeto
+
+### URLs, rotas e views
+- URL pública é o caminho que aparece no navegador. Exemplo: `/fontes/`.
+- Nome da rota é o identificador interno usado em `{% url %}`, `reverse()` e `redirect()`. Exemplo: `feeds:sources`.
+- View, ou handler, é a função que responde à requisição. Exemplo: `sources.index`.
+- Em `path('fontes/', sources.index, name='sources')`, `fontes/` é a URL pública, `sources.index` é a view e `sources` é o nome interno da rota.
+
+### Convenções
+- Use inglês para nomes internos: arquivos, pastas, módulos, funções, variáveis, classes e IDs no HTML/CSS e nomes internos de rotas.
+- Use português para textos exibidos ao usuário: títulos, botões, labels, mensagens e itens do menu.
+- URLs públicas podem ser em português quando fizer sentido para o usuário final.
+- Cada página deve ter seu módulo em `feeds/views/`. Exemplo: `feeds/views/sources.py`.
+- Use `index` como view principal da página. Exemplo: `sources.index`.
+- Ações da mesma página ficam no mesmo módulo. Exemplo: `create_source`, `update_source`, `delete_source`.
+- Dados temporários ou mockados devem ficar em `feeds/data/`. Exemplo: `feeds/data/sources.py`.
+- O template principal da página fica em `templates/pages/<page>/index.html`.
+- Use `templates/pages/<page>/partials/` para partes da página, como modais, formulários e blocos reaproveitados.
+- Layouts globais ficam em `templates/layouts/`, como `sidebar.html`.
+- CSS global entra em `static/css/base.css`; CSS de página entra em `static/css/pages/`.
+- JS global entra em `static/js/app.js`; JS de página entra em `static/js/pages/`.
+- Evite criar abstrações globais antes da necessidade. Se é usado por uma página só, deixe perto dela.
+
+## Checklist para novas páginas
+1. Crie `feeds/views/<page>.py`.
+2. Crie a view principal `index`.
+3. Cadastre a URL pública e o nome interno da rota em `feeds/urls.py`.
+4. Coloque dados temporários em `feeds/data/<page>.py`, se houver.
+5. Crie `templates/pages/<page>/index.html`.
+6. Crie `templates/pages/<page>/partials/` se precisar de modais ou blocos reaproveitados.
+7. Crie CSS/JS em `static/css/pages/` e `static/js/pages/`, se necessário.
+8. Inclua CSS e JS usando os blocos `styles` e `scripts`.
+9. Se aparecer na sidebar, adicione o link em `templates/layouts/sidebar.html`.
+10. Rode `python manage.py check`.
 
 ## Como Contribuir
 

@@ -1,14 +1,15 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Configurar Fontes | PI Fiscalia{% endblock %}
+{% block title %}Fontes | PI Fiscalia{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/sources.css' %}">{% endblock %}
 {% block header_badge %}<span class="badge-new">{{ sources|length }} fontes</span>{% endblock %}
 
 {% block content %}
 <section class="sources-page">
     <div class="sources-header">
         <div>
-            <h1 class="sources-title">Configurar Fontes RSS</h1>
+            <h1 class="sources-title">Fontes RSS</h1>
             <p class="sources-subtitle">Gerencie as fontes de informação que deseja monitorar para receber atualizações sobre mudanças fiscais.</p>
             <div class="sources-status">
                 <i data-lucide="check"></i>
@@ -16,10 +17,10 @@
             </div>
         </div>
 
-        <a href="#" class="btn-source-primary" title="Adicionar nova fonte" data-source-modal-open="div-source-create-modal">
+        <button type="button" class="btn-source-primary" title="Adicionar nova fonte" data-modal-open="div-source-create-modal">
             <i data-lucide="plus"></i>
             <span>Nova Fonte</span>
-        </a>
+        </button>
     </div>
 
     {% if messages %}
@@ -89,11 +90,11 @@
     </div>
 </section>
 
-{% include 'source_create_modal.html' %}
-{% include 'source_edit_modal.html' %}
-{% include 'source_delete_modal.html' %}
+{% include 'pages/sources/partials/create_modal.html' %}
+{% include 'pages/sources/partials/edit_modal.html' %}
+{% include 'pages/sources/partials/delete_modal.html' %}
 {% endblock %}
 
 {% block scripts %}
-<script src="{% static 'js/configure_sources.js' %}"></script>
+<script src="{% static 'js/pages/sources.js' %}"></script>
 {% endblock %}

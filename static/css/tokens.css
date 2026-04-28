@@ -1,0 +1,26 @@
+:root {
+  --bg-color: #f8f9fa;
+  --sidebar-bg: #f8f9fa;
+  --text-main: #111827;
+  --text-muted: #6b7280;
+  --primary-color: #5c6d59;
+  --primary-color-hover: #4e5c4b;
+  --border-color: #e5e7eb;
+  --card-bg: #ffffff;
+  --hover-bg: #eef0f2;
+  --success-color: #10b981;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  display: flex;
+  font-family: "Inter", sans-serif;
+  min-height: 100vh;
+}
