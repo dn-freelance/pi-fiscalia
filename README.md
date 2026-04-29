@@ -54,6 +54,9 @@ O projeto estará disponível em `http://127.0.0.1:8000/`.
 - `feeds/`: App principal para gestão de fontes e itens RSS.
 - `feeds/urls.py`: URLs públicas e nomes internos de rotas do app principal.
 - `feeds/views/`: Views separadas por página.
+- `feeds/models/`: Models separados por domínio.
+- `feeds/admin/`: Configurações do Django Admin separadas por domínio.
+- `feeds/tests/`: Testes separados por domínio ou página.
 - `feeds/data/`: Dados temporários e catálogos usados até a criação dos models.
 - `static/`: Arquivos estáticos (CSS, JS, Imagens).
 - `static/css/components/`: Estilos reutilizáveis, como botões, formulários, mensagens e modais.
@@ -80,6 +83,10 @@ O projeto estará disponível em `http://127.0.0.1:8000/`.
 - Cada página deve ter seu módulo em `feeds/views/`. Exemplo: `feeds/views/sources.py`.
 - Use `index` como view principal da página. Exemplo: `sources.index`.
 - Ações da mesma página ficam no mesmo módulo. Exemplo: `create_source`, `update_source`, `delete_source`.
+- Cada domínio persistido deve ter seu módulo em `feeds/models/`. Exemplo: `feeds/models/source.py`.
+- Reexporte os models em `feeds/models/__init__.py` para manter imports como `from feeds.models import Source`.
+- Configurações do admin também devem ficar por domínio em `feeds/admin/`. Exemplo: `feeds/admin/source.py`.
+- Testes devem ficar em `feeds/tests/`, agrupados por domínio ou página. Exemplo: `feeds/tests/test_sources.py`.
 - Dados temporários ou mockados devem ficar em `feeds/data/`. Exemplo: `feeds/data/sources.py`.
 - O template principal da página fica em `templates/pages/<page>/index.html`.
 - Use `templates/pages/<page>/partials/` para partes da página, como modais, formulários e blocos reaproveitados.

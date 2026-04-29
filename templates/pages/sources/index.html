@@ -38,7 +38,7 @@
                     <div class="source-title-row">
                         <h2>{{ source.name }}</h2>
                         <div class="source-tags">
-                            <span class="source-pill">{{ source.category }}</span>
+                            <span class="source-pill">{{ source.category.name }}</span>
                             {% if source.active %}<span class="source-pill is-active">Ativa</span>{% endif %}
                         </div>
                     </div>
@@ -60,7 +60,7 @@
                         data-source-name="{{ source.name }}"
                         data-source-url="{{ source.url }}"
                         data-source-description="{{ source.description }}"
-                        data-source-category="{{ source.category }}"
+                        data-source-category="{{ source.category_id }}"
                     >
                         <i data-lucide="pencil"></i>
                     </button>

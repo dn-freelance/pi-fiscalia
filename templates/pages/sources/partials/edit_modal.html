@@ -26,7 +26,7 @@
                 <label for="select-source-edit-category">Categoria</label>
                 <select id="select-source-edit-category" name="category" required>
                     {% for category in source_categories %}
-                        <option value="{{ category }}">{{ category }}</option>
+                        <option value="{{ category.id }}">{{ category.name }}</option>
                     {% endfor %}
                 </select>
             </div>
