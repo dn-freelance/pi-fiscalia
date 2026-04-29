@@ -1,0 +1,66 @@
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <div class="logo-icon">
+            <i data-lucide="bell"></i>
+        </div>
+        <div class="logo-text">
+            <span class="logo-title">Fiscalia</span>
+            <span class="logo-subtitle">MONITORAMENTO TRIBUTÁRIO</span>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Navegação principal">
+        <ul>
+            <li>
+                <a href="{% url 'feeds:index' %}" class="nav-item {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                    <i data-lucide="bar-chart-2"></i>
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="#" class="nav-item is-disabled" aria-disabled="true">
+                    <i data-lucide="layout-grid"></i>
+                    Informativos Fiscais
+                </a>
+            </li>
+            <li>
+                <a href="#" class="nav-item is-disabled" aria-disabled="true">
+                    <i data-lucide="tags"></i>
+                    Gerenciar Tags
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'feeds:sources' %}" class="nav-item {% if request.resolver_match.url_name == 'sources' %}active{% endif %}">
+                    <i data-lucide="settings"></i>
+                    Configurar Fontes
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="sidebar-widgets">
+        <div class="widget-card">
+            <h3>Assistência Fiscal</h3>
+            <p>Centralizamos as mudanças de NCM, ICMS e regras tributárias para facilitar o dia a dia do seu escritório.</p>
+            <hr>
+            <div class="widget-footer">
+                <span class="version-text">VERSÃO 2.4.0</span>
+                <div class="pagination" aria-hidden="true">
+                    <span class="page active">1</span>
+                    <span class="page">2</span>
+                    <span class="page">3</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="widget-card status-card">
+            <div class="status-header">
+                <span class="status-label">STATUS DA REDE</span>
+                <span class="status-value">Estável</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: 85%;"></div>
+            </div>
+        </div>
+    </div>
+</aside>
