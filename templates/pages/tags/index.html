@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gerenciar Tags | PI Fiscalia{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/tags.css' %}">{% endblock %}
+{% block header_title %}Gerenciar Tags{% endblock %}
+{% block header_badge %}<span class="badge-new">{{ tags|length }} tags</span>{% endblock %}
+
+{% block content %}
+<section class="tags-page">
+    <div class="tags-header">
+        <div>
+            <h1 class="tags-title">Gerenciar Tags</h1>
+            <p class="tags-subtitle">Crie e organize tags para categorizar informativos fiscais</p>
+        </div>
+
+        <button type="button" class="btn-source-primary" title="Adicionar nova tag" data-modal-open="div-tag-create-modal">
+            <i data-lucide="plus"></i>
+            <span>Nova Tag</span>
+        </button>
+    </div>
+
+    {% if messages %}
+        <div class="feedback-messages">
+            {% for message in messages %}
+                <div class="feedback-message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="tags-grid">
+        {% for tag in tags %}
+            <article class="tag-card">
+                <div class="tag-card-main">
+                    <span class="tag-badge tag-badge-{{ tag.color }}">{{ tag.name }}</span>
+                </div>
+                <div class="tag-actions">
+                    <button
+                        type="button"
+                        class="source-icon-button js-open-edit-tag"
+                        title="Editar tag"
+                        aria-label="Editar {{ tag.name }}"
+                        data-tag-update-url="{% url 'feeds:update_tag' tag.id %}"
+                        data-tag-name="{{ tag.name }}"
+                        data-tag-color="{{ tag.color }}"
+                    >
+                        <i data-lucide="pencil"></i>
+                    </button>
+
+                    <button
+                        type="button"
+                        class="source-icon-button danger js-open-delete-tag"
+                        title="Excluir tag"
+                        aria-label="Excluir {{ tag.name }}"
+                        data-tag-delete-url="{% url 'feeds:delete_tag' tag.id %}"
+                        data-tag-name="{{ tag.name }}"
+                    >
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
+            </article>
+        {% empty %}
+            <div class="tags-empty-state">
+                Nenhuma tag cadastrada ainda. Clique em Nova Tag para começar.
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% include 'pages/tags/partials/create_modal.html' %}
+{% include 'pages/tags/partials/edit_modal.html' %}
+{% include 'pages/tags/partials/delete_modal.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/pages/tags.js' %}"></script>
+{% endblock %}
