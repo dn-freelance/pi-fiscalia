@@ -1,0 +1,31 @@
+<div class="modal-overlay" id="div-tag-edit-modal" style="display: none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Editar Tag</h2>
+            <button type="button" class="close-btn" aria-label="Fechar modal" data-modal-close="div-tag-edit-modal">&times;</button>
+        </div>
+
+        <form id="form-tag-edit" method="post" action="">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="input-tag-edit-name">Nome da Tag</label>
+                <input id="input-tag-edit-name" name="name" type="text" placeholder="Ex: ICMS, NCM, Simples Nacional" required pattern="^[A-Za-zÀ-ÿ0-9\s\-/&()]+$" title="Use letras, números, espaços e os símbolos / - & ()">
+            </div>
+
+            <div class="form-group">
+                <label>Cor</label>
+                <div class="tag-color-picker" data-color-field="input-tag-edit-color">
+                    {% for key, label in tag_color_choices %}
+                        <button type="button" class="tag-color-button tag-color-button-{{ key }}" data-color="{{ key }}">{{ label }}</button>
+                    {% endfor %}
+                </div>
+                <input id="input-tag-edit-color" name="color" type="hidden" value="blue">
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-modal-close="div-tag-edit-modal">Cancelar</button>
+                <button type="submit" class="btn btn-success">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>

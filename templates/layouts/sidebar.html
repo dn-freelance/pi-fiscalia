@@ -24,7 +24,7 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="nav-item is-disabled" aria-disabled="true">
+                <a href="{% url 'feeds:tags' %}" class="nav-item {% if request.resolver_match.url_name == 'tags' %}active{% endif %}">
                     <i data-lucide="tags"></i>
                     Gerenciar Tags
                 </a>
