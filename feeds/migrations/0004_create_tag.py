@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='atualizado em')),
             ],
             options={
-                'ordering': ['name'],
+                'ordering': ['-created_at'],
                 'verbose_name': 'Tag',
                 'verbose_name_plural': 'Tags',
             },
