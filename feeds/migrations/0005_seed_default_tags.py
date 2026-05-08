@@ -33,7 +33,7 @@ def delete_default_tags(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('feeds', '0005_alter_tag_ordering'),
+        ('feeds', '0004_create_tag'),
     ]
 
     operations = [
