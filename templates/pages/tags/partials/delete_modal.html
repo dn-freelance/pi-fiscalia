@@ -1,0 +1,19 @@
+<div class="modal-overlay" id="div-tag-delete-modal" style="display: none;">
+    <div class="modal-box modal-box-sm">
+        <div class="modal-header">
+            <h2>Confirmar exclusão</h2>
+        </div>
+
+        <p class="modal-description">Tem certeza que deseja remover esta tag? Esta ação não pode ser desfeita.</p>
+
+        <form id="form-tag-delete" method="post" action="">
+            {% csrf_token %}
+            <input type="hidden" name="name" value="">
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-modal-close="div-tag-delete-modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Excluir</button>
+            </div>
+        </form>
+    </div>
+</div>
