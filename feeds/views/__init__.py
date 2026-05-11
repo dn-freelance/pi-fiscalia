@@ -1,3 +1,3 @@
-from . import api, dashboard, sources
+from . import api, dashboard, sources, tags
 
-__all__ = ['api', 'dashboard', 'sources']
+__all__ = ['api', 'dashboard', 'sources', 'tags']
