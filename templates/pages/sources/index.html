@@ -86,6 +86,15 @@
                     </form>
                 </div>
             </article>
+        {% empty %}
+            <div class="sources-empty-state">
+                <h2>Nenhuma fonte cadastrada</h2>
+                <p>Use o botão Nova Fonte para adicionar um feed RSS e começar a importar informativos fiscais por aqui.</p>
+                <button type="button" class="btn-source-primary" title="Adicionar nova fonte" data-modal-open="div-source-create-modal">
+                    <i data-lucide="plus"></i>
+                    <span>Cadastrar primeira fonte</span>
+                </button>
+            </div>
         {% endfor %}
     </div>
 </section>

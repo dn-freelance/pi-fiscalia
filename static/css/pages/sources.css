@@ -79,6 +79,33 @@
   gap: 14px;
 }
 
+.sources-empty-state {
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  grid-column: 1 / -1;
+  padding: 42px 24px;
+  text-align: center;
+}
+
+.sources-empty-state h2 {
+  color: var(--text-main);
+  font-size: 20px;
+  margin: 0;
+}
+
+.sources-empty-state p {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 520px;
+}
+
 .source-card {
   align-items: flex-start;
   background-color: var(--card-bg);
