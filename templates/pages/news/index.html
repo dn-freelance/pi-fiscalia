@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% load static %}
+{% load news_extras %}
+
+{% block title %}Informativos Fiscais | PI Fiscalia{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/news.css' %}">{% endblock %}
+{% block header_title %}Informativos Fiscais{% endblock %}
+{% block header_badge %}<span class="badge-new">{{ unread_count }} não lidos</span>{% endblock %}
+
+{% block content %}
+<section class="news-page">
+    <div class="news-header">
+        <div>
+            <h1 class="news-title">Informativos Fiscais</h1>
+            <p class="news-subtitle">Acompanhe as notícias importadas dos feeds RSS cadastrados e monitore o que ainda precisa ser lido.</p>
+        </div>
+
+        <form id="form-news-refresh" method="post" action="{% url 'feeds:refresh_news' %}" class="news-refresh-form">
+            {% csrf_token %}
+            <input type="hidden" name="q" value="{{ selected_query }}">
+            <input type="hidden" name="source" value="{{ selected_source }}">
+            <input type="hidden" name="status" value="{{ selected_status }}">
+            <button type="submit" class="news-refresh-button" data-loading-text="Atualizando...">
+                <i data-lucide="refresh-cw"></i>
+                <span>Atualizar</span>
+            </button>
+        </form>
+    </div>
+
+    {% if messages %}
+        <div class="feedback-messages">
+            {% for message in messages %}
+                <div class="feedback-message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="news-filters-panel">
+        <form method="get" id="form-news-filters" class="news-filters-form">
+            <label class="news-search-field" for="input-news-search">
+                <i data-lucide="search"></i>
+                <input
+                    id="input-news-search"
+                    name="q"
+                    type="search"
+                    value="{{ selected_query }}"
+                    placeholder="Pesquisar informativos..."
+                >
+            </label>
+
+            <label class="news-select-field" for="select-news-source">
+                <span>Fonte</span>
+                <select id="select-news-source" name="source" class="js-news-filter-select">
+                    <option value="">Todas as fontes</option>
+                    {% for source in sources %}
+                        <option value="{{ source.id }}"{% if selected_source == source.id|stringformat:"s" %} selected{% endif %}>{{ source.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label class="news-select-field" for="select-news-status">
+                <span>Status</span>
+                <select id="select-news-status" name="status" class="js-news-filter-select">
+                    {% for value, label in status_options %}
+                        <option value="{{ value }}"{% if selected_status == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <button type="submit" class="news-filter-button">
+                <i data-lucide="sliders-horizontal"></i>
+                <span>Filtrar</span>
+            </button>
+        </form>
+    </div>
+
+    <div class="news-results-bar">
+        <span>{{ news_items|length }} informativo{{ news_items|length|pluralize }} encontrado{{ news_items|length|pluralize }}</span>
+    </div>
+
+    {% if news_items %}
+        <form id="form-news-bulk-action" method="post" action="{% url 'feeds:bulk_update_news_read' %}">
+            {% csrf_token %}
+            <input type="hidden" name="q" value="{{ selected_query }}">
+            <input type="hidden" name="source" value="{{ selected_source }}">
+            <input type="hidden" name="status" value="{{ selected_status }}">
+            <div class="news-bulk-bar" id="div-news-bulk-bar" hidden>
+                <div class="news-bulk-bar-left">
+                    <span class="news-bulk-count" aria-live="polite">
+                        <span id="span-news-selected-count">0</span>
+                        <span id="span-news-selected-label">itens selecionados</span>
+                    </span>
+                    <button type="submit" name="bulk_action" value="mark_read" class="news-bulk-button">
+                        <i data-lucide="check"></i>
+                        <span>Marcar como Lido</span>
+                    </button>
+                    <button type="submit" name="bulk_action" value="mark_unread" class="news-bulk-button secondary">
+                        <span>Marcar como Não Lido</span>
+                    </button>
+                </div>
+
+                <button type="button" class="news-bulk-close" id="btn-news-clear-selection" aria-label="Limpar seleção">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </form>
+
+        <label class="news-select-all-row" for="input-news-select-all">
+            <input type="checkbox" id="input-news-select-all">
+            <span>Selecionar todos ({{ news_items|length }})</span>
+        </label>
+    {% endif %}
+
+    <div class="news-list">
+        {% for item in news_items %}
+            <article class="news-card {% if not item.is_read %}is-unread{% endif %}" id="article-news-card-{{ item.id }}">
+                <div class="news-card-header">
+                    <div class="news-card-leading">
+                        <label class="news-card-checkbox" for="input-news-select-{{ item.id }}">
+                            <input
+                                type="checkbox"
+                                id="input-news-select-{{ item.id }}"
+                                name="selected_news_ids"
+                                value="{{ item.id }}"
+                                form="form-news-bulk-action"
+                                class="js-news-item-checkbox"
+                                data-card-id="article-news-card-{{ item.id }}"
+                            >
+                            <span></span>
+                        </label>
+
+                        <div class="news-card-badges">
+                            {% if not item.is_read %}
+                                <span class="news-badge news-badge-new">NOVA</span>
+                            {% endif %}
+                            <span class="news-badge news-badge-source">{{ item.source.name }}</span>
+                            <span class="news-badge news-badge-category">{{ item.source.category.name }}</span>
+                        </div>
+                    </div>
+
+                    <time class="news-card-date" datetime="{{ item.displayed_at|date:'c' }}">
+                        <i data-lucide="clock-3"></i>
+                        <span>{{ item.displayed_at|news_card_datetime }}</span>
+                    </time>
+                </div>
+
+                <h2 class="news-card-title">{{ item.title }}</h2>
+
+                {% if item.summary %}
+                    <p class="news-card-description">
+                        {{ item.summary|truncatechars:420 }}
+                    </p>
+                {% endif %}
+
+                <div class="news-card-footer">
+                    <form method="post" action="{% url 'feeds:toggle_news_read' item.id %}" class="news-read-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="q" value="{{ selected_query }}">
+                        <input type="hidden" name="source" value="{{ selected_source }}">
+                        <input type="hidden" name="status" value="{{ selected_status }}">
+                        <button type="submit" class="news-read-button {% if item.is_read %}is-read{% endif %}">
+                            <i data-lucide="{% if item.is_read %}mail-plus{% else %}mail-check{% endif %}"></i>
+                            <span>{% if item.is_read %}Marcar como não lido{% else %}Marcar como lido{% endif %}</span>
+                        </button>
+                    </form>
+
+                    <a href="{{ item.link }}" target="_blank" rel="noreferrer" class="news-original-link">
+                        <i data-lucide="external-link"></i>
+                        <span>Ver original</span>
+                    </a>
+                </div>
+            </article>
+        {% empty %}
+            <div class="news-empty-state">
+                <h2>Nenhum informativo encontrado</h2>
+                <p>Use o botão Atualizar para importar notícias das fontes ativas ou ajuste os filtros para ampliar a busca.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/pages/news.js' %}"></script>
+{% endblock %}

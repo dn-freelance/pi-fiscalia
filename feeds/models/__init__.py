@@ -1,5 +1,6 @@
+from .news_item import NewsItem
 from .source import Source
 from .source_category import SourceCategory
 from .tag import Tag
 
-__all__ = ['Source', 'SourceCategory', 'Tag']
+__all__ = ['NewsItem', 'Source', 'SourceCategory', 'Tag']

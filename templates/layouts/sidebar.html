@@ -18,7 +18,7 @@
                 </a>
             </li>
             <li>
-                <a href="#" class="nav-item is-disabled" aria-disabled="true">
+                <a href="{% url 'feeds:news' %}" class="nav-item {% if request.resolver_match.url_name == 'news' %}active{% endif %}">
                     <i data-lucide="layout-grid"></i>
                     Informativos Fiscais
                 </a>

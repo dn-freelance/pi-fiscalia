@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import api, dashboard, sources, tags
+from .views import api, dashboard, news, sources, tags
 
 app_name = 'feeds'
 
@@ -8,6 +8,11 @@ urlpatterns = [
     path('', dashboard.index, name='index'),
 
     path('api/exemplo/', api.exemplo_post, name='exemplo_post'),
+
+    path('informativos/', news.index, name='news'),
+    path('informativos/atualizar/', news.refresh_news, name='refresh_news'),
+    path('informativos/acoes-em-lote/', news.bulk_update_news_read, name='bulk_update_news_read'),
+    path('informativos/<int:news_id>/alternar-leitura/', news.toggle_news_read, name='toggle_news_read'),
 
     path('fontes/', sources.index, name='sources'),
     path('fontes/cadastrar/', sources.create_source, name='create_source'),
