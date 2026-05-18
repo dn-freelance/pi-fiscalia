@@ -54,11 +54,16 @@
         var refreshForm = document.getElementById('form-news-refresh');
         var selectAllInput = document.getElementById('input-news-select-all');
         var clearSelectionButton = document.getElementById('btn-news-clear-selection');
-        var bulkForm = document.getElementById('form-news-bulk-action');
         var itemCheckboxes = Array.from(document.querySelectorAll('.js-news-item-checkbox'));
 
         if (filterForm) {
             filterForm.querySelectorAll('.js-news-filter-select').forEach(function (field) {
+                field.addEventListener('change', function () {
+                    filterForm.submit();
+                });
+            });
+
+            filterForm.querySelectorAll('.news-date-field input').forEach(function (field) {
                 field.addEventListener('change', function () {
                     filterForm.submit();
                 });

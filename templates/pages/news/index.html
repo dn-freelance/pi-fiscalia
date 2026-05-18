@@ -21,6 +21,8 @@
             <input type="hidden" name="source" value="{{ selected_source }}">
             <input type="hidden" name="status" value="{{ selected_status }}">
             <input type="hidden" name="relevance" value="{{ selected_relevance }}">
+            <input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">
+            <input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">
             <button type="submit" class="news-refresh-button" data-loading-text="Atualizando...">
                 <i data-lucide="refresh-cw"></i>
                 <span>Atualizar</span>
@@ -48,6 +50,11 @@
                     placeholder="Pesquisar informativos..."
                 >
             </label>
+
+            <button type="submit" class="news-search-button">
+                <i data-lucide="search"></i>
+                <span>Pesquisar</span>
+            </button>
 
             <label class="news-select-field" for="select-news-source">
                 <span>Fonte</span>
@@ -77,10 +84,25 @@
                 </select>
             </label>
 
-            <button type="submit" class="news-filter-button">
-                <i data-lucide="sliders-horizontal"></i>
-                <span>Filtrar</span>
-            </button>
+            <label class="news-date-field" for="input-news-effective-date-from">
+                <span>Vigência de</span>
+                <input
+                    id="input-news-effective-date-from"
+                    name="effective_date_from"
+                    type="date"
+                    value="{{ selected_effective_date_from }}"
+                >
+            </label>
+
+            <label class="news-date-field" for="input-news-effective-date-to">
+                <span>Vigência até</span>
+                <input
+                    id="input-news-effective-date-to"
+                    name="effective_date_to"
+                    type="date"
+                    value="{{ selected_effective_date_to }}"
+                >
+            </label>
         </form>
     </div>
 
@@ -95,6 +117,8 @@
             <input type="hidden" name="source" value="{{ selected_source }}">
             <input type="hidden" name="status" value="{{ selected_status }}">
             <input type="hidden" name="relevance" value="{{ selected_relevance }}">
+            <input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">
+            <input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">
             <div class="news-bulk-bar" id="div-news-bulk-bar" hidden>
                 <div class="news-bulk-bar-left">
                     <span class="news-bulk-count" aria-live="polite">
@@ -217,6 +241,8 @@
                         <input type="hidden" name="source" value="{{ selected_source }}">
                         <input type="hidden" name="status" value="{{ selected_status }}">
                         <input type="hidden" name="relevance" value="{{ selected_relevance }}">
+                        <input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">
+                        <input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">
                         <button type="submit" class="news-read-button {% if item.is_read %}is-read{% endif %}">
                             <i data-lucide="{% if item.is_read %}mail-plus{% else %}mail-check{% endif %}"></i>
                             <span>{% if item.is_read %}Marcar como não lido{% else %}Marcar como lido{% endif %}</span>

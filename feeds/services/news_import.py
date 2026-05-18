@@ -18,6 +18,7 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 
 from feeds.models import NewsItem, Source
+from feeds.services.dashboard_weekly_summary import invalidate_current_week_summary
 from feeds.services.news_analysis import build_news_analysis_service
 
 logger = logging.getLogger(__name__)
@@ -173,6 +174,8 @@ def import_news_items(timeout=15, progress_callback=None):
     sources = Source.objects.filter(active=True).order_by('name')
     result.source_count = sources.count()
     analysis_candidates = []
+
+    invalidate_current_week_summary()
 
     if analysis_warning:
         result.analysis_warnings.append(analysis_warning)

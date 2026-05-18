@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% load static %}
-{% load news_extras %}
 
 {% block title %}Dashboard | PI Fiscalia{% endblock %}
 {% block styles %}<link rel="stylesheet" href="{% static 'css/pages/dashboard.css' %}">{% endblock %}
@@ -9,227 +8,106 @@
 
 {% block content %}
 <section class="dashboard-page">
-    <div class="dashboard-header">
-        <h1 class="dashboard-title">Dashboard de Insights Fiscais</h1>
-        <p class="dashboard-subtitle">Visão analítica das mudanças tributárias, com foco no que merece leitura primeiro e nos assuntos que mais estão aparecendo no monitoramento.</p>
-    </div>
+    <div class="dashboard-shell">
+        <div class="dashboard-intro">
+            <h1>Dashboard de Insights Fiscais</h1>
+            <p>Visão analítica das mudanças tributárias e seu impacto.</p>
+        </div>
 
-    <div class="stats-grid">
-        {% for metric in dashboard_metrics %}
-            <article class="stat-card stat-{{ metric.variant }}">
-                <div class="stat-head">
-                    <div>
-                        <span class="stat-label">{{ metric.label }}</span>
-                        <span class="stat-value">{{ metric.value }}</span>
-                    </div>
-
-                    <span class="stat-icon">
-                        <i data-lucide="{{ metric.icon }}"></i>
-                    </span>
-                </div>
-
-                <span class="stat-hint">{{ metric.hint }}</span>
-            </article>
-        {% endfor %}
-    </div>
-
-    <div class="dashboard-main-grid">
-        <section class="dashboard-panel dashboard-focus-panel">
-            <div class="panel-header">
-                <div>
-                    <h2>Principal mudança em foco</h2>
-                    <p>Destaque operacional por recência, leitura pendente e tema monitorado.</p>
-                </div>
-                <a href="{% url 'feeds:news' %}" class="panel-link">Abrir informativos</a>
-            </div>
-
-            {% if principal_change %}
-                <article class="focus-card {% if not principal_change.is_read %}is-unread{% endif %}">
-                    <div class="focus-card-header">
-                        <div class="focus-badges">
-                            <span class="dashboard-badge">{{ principal_change.source.name }}</span>
-                            <span class="dashboard-badge is-muted">{{ principal_change.source.category.name }}</span>
-                            {% if not principal_change.is_read %}
-                                <span class="dashboard-badge is-fresh">Não lido</span>
-                            {% endif %}
+        <div class="dashboard-metrics">
+            {% for metric in dashboard_metrics %}
+                <a href="{{ metric.href }}" class="metric-card metric-card-{{ metric.variant }} metric-card-link">
+                    <div class="metric-card-head">
+                        <div>
+                            <p class="metric-label">{{ metric.label }}</p>
+                            <p class="metric-value">{{ metric.value }}</p>
                         </div>
-
-                        {% if principal_change.focus_reason %}
-                            <span class="focus-reason">{{ principal_change.focus_reason }}</span>
-                        {% endif %}
+                        <i data-lucide="{{ metric.icon }}" class="metric-icon"></i>
                     </div>
+                </a>
+            {% endfor %}
+        </div>
 
-                    <h3>{{ principal_change.title }}</h3>
-
-                    {% if principal_change.summary %}
-                        <p class="focus-summary">{{ principal_change.summary|truncatechars:280 }}</p>
-                    {% else %}
-                        <p class="focus-summary is-empty">Este informativo ainda não tem resumo armazenado.</p>
-                    {% endif %}
-
-                    <div class="focus-topics">
-                        {% for topic in principal_change.dashboard_topics %}
-                            <span class="focus-topic">{{ topic }}</span>
-                        {% endfor %}
+        {% if principal_change %}
+            <a href="{{ principal_change.href }}" class="dashboard-card dashboard-highlight-card dashboard-card-link">
+                <div class="highlight-header">
+                    <div class="highlight-header-main">
+                        <i data-lucide="sparkles" class="highlight-icon"></i>
+                        <div>
+                            <h2>🎯 Principal Mudança Fiscal</h2>
+                            <p>Maior impacto identificado</p>
+                        </div>
                     </div>
-
-                    <div class="focus-footer">
-                        <time datetime="{{ principal_change.reference_at|date:'c' }}">{{ principal_change.reference_at|news_card_datetime }}</time>
-                        <a href="{{ principal_change.link }}" target="_blank" rel="noreferrer" class="dashboard-cta-inline">Ver original</a>
-                    </div>
-                </article>
-            {% else %}
-                <div class="dashboard-empty-state">
-                    <h3>Nenhum informativo disponível ainda</h3>
-                    <p>Assim que as fontes ativas começarem a importar notícias, este bloco vai destacar automaticamente a principal mudança para acompanhar.</p>
+                    <span class="highlight-badge">ALTA RELEVÂNCIA</span>
                 </div>
-            {% endif %}
-        </section>
 
-        <section class="dashboard-panel">
-            <div class="panel-header">
-                <div>
-                    <h2>Assuntos mais recorrentes</h2>
-                    <p>Leitura rápida dos temas que mais aparecem nos informativos.</p>
+                <h3>{{ principal_change.title }}</h3>
+                <p class="highlight-description">{{ principal_change.description|default:"Ainda não há resumo armazenado para esta mudança." }}</p>
+
+                <div class="highlight-meta">
+                    <span class="highlight-meta-item highlight-meta-item-date">📅 Vigência: {{ principal_change.effective_date_display }}</span>
+                    <span class="highlight-meta-item">Score: {{ principal_change.score }}</span>
                 </div>
+            </a>
+        {% endif %}
+
+        <article class="dashboard-card">
+            <div class="dashboard-card-title">
+                <i data-lucide="trending-up" class="section-icon"></i>
+                <h2>Temas Mais Recorrentes</h2>
             </div>
 
             {% if topic_rows %}
                 <div class="topic-list">
                     {% for topic in topic_rows %}
-                        <article class="topic-item">
-                            <div class="topic-item-head">
-                                <div class="topic-rank">{{ forloop.counter }}</div>
+                        <div class="topic-row">
+                            <div class="topic-rank">{{ forloop.counter }}</div>
+                            <div class="topic-content">
                                 <div class="topic-copy">
-                                    <h3>{{ topic.name }}</h3>
-                                    <p>{{ topic.count }} informativo{% if topic.count != 1 %}s{% endif %}</p>
+                                    <span class="topic-name">{{ topic.name }}</span>
+                                    <span class="topic-count">{{ topic.count }} menç{% if topic.count == 1 %}ão{% else %}ões{% endif %}</span>
+                                </div>
+                                <div class="topic-progress-track">
+                                    <div class="topic-progress-bar" style="width: {{ topic.percentage }}%;"></div>
                                 </div>
                             </div>
-
-                            <div class="topic-progress">
-                                <div class="topic-progress-bar" style="width: {{ topic.percentage }}%;"></div>
-                            </div>
-                        </article>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="dashboard-empty-copy">Ainda não há recorrência suficiente para destacar assuntos.</p>
-            {% endif %}
-        </section>
-    </div>
-
-    <div class="dashboard-secondary-grid">
-        <section class="dashboard-panel">
-            <div class="panel-header">
-                <div>
-                    <h2>Panorama rápido</h2>
-                    <p>Resumo operacional para entender o momento do monitoramento.</p>
-                </div>
-            </div>
-
-            <div class="summary-points">
-                {% for point in summary_points %}
-                    <article class="summary-point">
-                        <span class="summary-marker"></span>
-                        <p>{{ point }}</p>
-                    </article>
-                {% endfor %}
-            </div>
-
-            {% if recent_news_items %}
-                <div class="recent-list">
-                    {% for item in recent_news_items %}
-                        <article class="recent-item">
-                            <div>
-                                <h3>{{ item.title }}</h3>
-                                <p>{{ item.source.name }} • {{ item.reference_at|news_card_datetime }}</p>
-                            </div>
-                            {% if not item.is_read %}
-                                <span class="recent-status">Novo</span>
-                            {% endif %}
-                        </article>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        </section>
-
-        <section class="dashboard-panel">
-            <div class="panel-header">
-                <div>
-                    <h2>Fontes em destaque</h2>
-                    <p>Quem mais está alimentando o monitoramento agora.</p>
-                </div>
-                <a href="{% url 'feeds:sources' %}" class="panel-link">Gerenciar fontes</a>
-            </div>
-
-            {% if top_sources %}
-                <div class="source-list">
-                    {% for source in top_sources %}
-                        <article class="source-item">
-                            <div>
-                                <h3>{{ source.name }}</h3>
-                                <p>{{ source.category.name }}</p>
-                            </div>
-
-                            <div class="source-item-meta">
-                                <span>{{ source.news_total }} item{% if source.news_total != 1 %}s{% endif %}</span>
-                                <span>{{ source.unread_total }} não lido{% if source.unread_total != 1 %}s{% endif %}</span>
-                            </div>
-                        </article>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p class="dashboard-empty-copy">Cadastre e ative fontes para começar a formar o radar de mudanças.</p>
-            {% endif %}
-
-            <div class="source-health-inline">
-                <span>{{ source_health.active_count }} ativa{% if source_health.active_count != 1 %}s{% endif %}</span>
-                <span>{{ source_health.inactive_count }} inativa{% if source_health.inactive_count != 1 %}s{% endif %}</span>
-                <span>{{ source_health.active_percentage }}% ativas</span>
-            </div>
-        </section>
-    </div>
-
-    <div class="dashboard-support-grid">
-        <section class="dashboard-panel">
-            <div class="panel-header">
-                <div>
-                    <h2>Cobertura monitorada</h2>
-                    <p>Distribuição das fontes e informativos por categoria.</p>
-                </div>
-            </div>
-
-            <div class="coverage-list">
-                {% for category in category_rows %}
-                    <article class="coverage-item">
-                        <div>
-                            <h3>{{ category.name }}</h3>
-                            <p>{{ category.active_source_total }} ativa{% if category.active_source_total != 1 %}s{% endif %} de {{ category.source_total }}</p>
                         </div>
-                        <strong>{{ category.news_total }}</strong>
-                    </article>
-                {% endfor %}
-            </div>
-        </section>
-
-        <section class="dashboard-panel">
-            <div class="panel-header">
-                <div>
-                    <h2>Assuntos monitorados</h2>
-                    <p>Tags acompanhadas pelo sistema e quantas vezes apareceram.</p>
+                    {% endfor %}
                 </div>
-                <a href="{% url 'feeds:tags' %}" class="panel-link">Gerenciar tags</a>
+            {% else %}
+                <p class="dashboard-empty-copy">Ainda não há palavras-chave recorrentes o suficiente para destacar temas.</p>
+            {% endif %}
+        </article>
+
+        <article
+            class="dashboard-card dashboard-summary-card"
+            data-dashboard-weekly-summary
+            data-status="{{ weekly_summary.status }}"
+            data-status-url="{{ weekly_summary_status_url }}"
+        >
+            <h2>📊 Resumo Semanal</h2>
+
+            <div class="weekly-summary-feedback{% if not weekly_summary.is_loading %} is-hidden{% endif %}" data-weekly-summary-feedback>
+                <div class="weekly-summary-skeleton">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <p data-weekly-summary-message>{{ weekly_summary.message }}</p>
             </div>
 
-            <div class="dashboard-tag-list">
-                {% for tag in monitored_tags %}
-                    <span class="dashboard-tag dashboard-tag-{{ tag.color }}">
-                        {{ tag.name }}
-                        <small>{{ tag.count }}</small>
-                    </span>
-                {% endfor %}
+            <div class="weekly-summary-content{% if not weekly_summary.is_ready %} is-hidden{% endif %}" data-weekly-summary-content>
+                <p><strong>Esta semana:</strong> <span data-weekly-summary-overview>{{ weekly_summary.overview }}</span></p>
+                <p><strong>Principais mudanças:</strong> <span data-weekly-summary-main-changes>{{ weekly_summary.main_changes }}</span></p>
+                <p><strong>Atenção:</strong> <span data-weekly-summary-attention>{{ weekly_summary.attention }}</span></p>
             </div>
-        </section>
+
+            <p class="weekly-summary-error{% if weekly_summary.status != 'failed' %} is-hidden{% endif %}" data-weekly-summary-error>
+                {{ weekly_summary.error_message|default:weekly_summary.message }}
+            </p>
+        </article>
     </div>
 </section>
 {% endblock %}
+
+{% block scripts %}<script src="{% static 'js/pages/dashboard.js' %}"></script>{% endblock %}

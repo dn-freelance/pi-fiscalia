@@ -6,6 +6,7 @@ app_name = 'feeds'
 
 urlpatterns = [
     path('', dashboard.index, name='index'),
+    path('dashboard/resumo-semanal/status/', dashboard.weekly_summary_status, name='dashboard_weekly_summary_status'),
 
     path('api/exemplo/', api.exemplo_post, name='exemplo_post'),
 

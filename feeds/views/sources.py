@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from feeds.models import Source, SourceCategory
+from feeds.services.dashboard_weekly_summary import invalidate_current_week_summary
 
 
 def index(request):
@@ -32,13 +33,12 @@ def create_source(request):
         return redirect('feeds:sources')
 
     saved, error_message = _save_source(source, source_data, category)
-
     if not saved:
         messages.error(request, error_message)
         return redirect('feeds:sources')
 
+    invalidate_current_week_summary()
     messages.success(request, f'Fonte "{source.name}" cadastrada com sucesso.')
-
     return redirect('feeds:sources')
 
 
@@ -58,13 +58,12 @@ def update_source(request, source_id):
         return redirect('feeds:sources')
 
     saved, error_message = _save_source(source, source_data, category)
-
     if not saved:
         messages.error(request, error_message)
         return redirect('feeds:sources')
 
+    invalidate_current_week_summary()
     messages.success(request, f'Fonte "{source.name}" atualizada com sucesso.')
-
     return redirect('feeds:sources')
 
 
@@ -74,8 +73,8 @@ def delete_source(request, source_id):
     name = source.name
 
     source.delete()
+    invalidate_current_week_summary()
     messages.success(request, f'Fonte "{name}" excluída com sucesso.')
-
     return redirect('feeds:sources')
 
 
@@ -87,8 +86,9 @@ def toggle_source_status(request, source_id):
 
     source.active = active
     source.save(update_fields=['active', 'updated_at'])
-    messages.success(request, f'Fonte "{source.name}" {status} com sucesso.')
 
+    invalidate_current_week_summary()
+    messages.success(request, f'Fonte "{source.name}" {status} com sucesso.')
     return redirect('feeds:sources')
 
 

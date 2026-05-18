@@ -475,6 +475,52 @@ class NewsViewTests(TestCase):
         self.assertContains(response, 'Mudança relevante de ICMS')
         self.assertNotContains(response, 'Nota institucional')
 
+    def test_news_index_filters_by_effective_date_range(self):
+        source = Source.objects.create(
+            name='Fonte Vigência',
+            url='https://example.com/vigencia/rss',
+            category=self.federal,
+            active=True,
+        )
+        in_range_item = NewsItem.objects.create(
+            source=source,
+            title='Mudança com vigência no intervalo',
+            summary='Resumo A',
+            link='https://example.com/in-range',
+            external_id='in-range',
+            dedupe_key='in-range',
+        )
+        out_of_range_item = NewsItem.objects.create(
+            source=source,
+            title='Mudança fora do intervalo',
+            summary='Resumo B',
+            link='https://example.com/out-of-range',
+            external_id='out-of-range',
+            dedupe_key='out-of-range',
+        )
+        current_date = timezone.localdate()
+        NewsItemAnalysis.objects.create(
+            news_item=in_range_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=current_date + timedelta(days=3),
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=out_of_range_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=current_date + timedelta(days=20),
+        )
+
+        response = self.client.get(
+            reverse('feeds:news'),
+            {
+                'effective_date_from': (current_date + timedelta(days=1)).isoformat(),
+                'effective_date_to': (current_date + timedelta(days=7)).isoformat(),
+            },
+        )
+
+        self.assertContains(response, 'Mudança com vigência no intervalo')
+        self.assertNotContains(response, 'Mudança fora do intervalo')
+
     def test_delete_source_removes_news_items(self):
         source = Source.objects.create(
             name='Fonte com notícias',
@@ -590,7 +636,13 @@ class NewsViewTests(TestCase):
 
         response = self.client.post(
             reverse('feeds:toggle_news_read', args=[item.id]),
-            {'q': 'toggle', 'source': str(source.id), 'status': 'unread'},
+            {
+                'q': 'toggle',
+                'source': str(source.id),
+                'status': 'unread',
+                'effective_date_from': '2026-05-01',
+                'effective_date_to': '2026-05-31',
+            },
             follow=True,
         )
 
@@ -598,7 +650,10 @@ class NewsViewTests(TestCase):
         self.assertTrue(item.is_read)
         self.assertEqual(
             response.redirect_chain[0][0],
-            f"{reverse('feeds:news')}?q=toggle&source={source.id}&status=unread",
+            (
+                f"{reverse('feeds:news')}?q=toggle&source={source.id}&status=unread"
+                '&effective_date_from=2026-05-01&effective_date_to=2026-05-31'
+            ),
         )
         self.assertContains(response, 'Informativo marcado como lido.')
 
@@ -635,6 +690,8 @@ class NewsViewTests(TestCase):
                 'q': 'lote',
                 'source': str(source.id),
                 'status': 'unread',
+                'effective_date_from': '2026-05-01',
+                'effective_date_to': '2026-05-31',
             },
             follow=True,
         )
@@ -645,7 +702,10 @@ class NewsViewTests(TestCase):
         self.assertFalse(untouched_item.is_read)
         self.assertEqual(
             response.redirect_chain[0][0],
-            f"{reverse('feeds:news')}?q=lote&source={source.id}&status=unread",
+            (
+                f"{reverse('feeds:news')}?q=lote&source={source.id}&status=unread"
+                '&effective_date_from=2026-05-01&effective_date_to=2026-05-31'
+            ),
         )
         self.assertContains(response, '1 informativo(s) marcado(s) como lidos.')
 

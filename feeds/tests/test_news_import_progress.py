@@ -24,6 +24,8 @@ class NewsImportProgressTests(TestCase):
                     'source': '12',
                     'status': 'unread',
                     'relevance': 'high',
+                    'effective_date_from': '2026-05-01',
+                    'effective_date_to': '2026-05-31',
                 },
             )
 
@@ -34,6 +36,8 @@ class NewsImportProgressTests(TestCase):
         self.assertEqual(job.redirect_source, '12')
         self.assertEqual(job.redirect_status, 'unread')
         self.assertEqual(job.redirect_relevance, 'high')
+        self.assertEqual(job.redirect_effective_date_from, '2026-05-01')
+        self.assertEqual(job.redirect_effective_date_to, '2026-05-31')
         mocked_start.assert_called_once_with(job.id)
 
     def test_run_news_import_job_updates_job_counters_and_messages(self):
@@ -44,15 +48,19 @@ class NewsImportProgressTests(TestCase):
             active=True,
         )
         job = NewsImportJob.objects.create()
-        feed_response = DummyResponse(build_feed([
-            {
-                'title': 'Nova instrução normativa',
-                'link': 'https://example.com/noticia-1',
-                'guid': 'news-1',
-                'published_at': 'Tue, 12 May 2026 12:30:00 GMT',
-                'summary': 'Resumo de teste.',
-            },
-        ]))
+        feed_response = DummyResponse(
+            build_feed(
+                [
+                    {
+                        'title': 'Nova instrução normativa',
+                        'link': 'https://example.com/noticia-1',
+                        'guid': 'news-1',
+                        'published_at': 'Tue, 12 May 2026 12:30:00 GMT',
+                        'summary': 'Resumo de teste.',
+                    },
+                ]
+            )
+        )
 
         with patch('feeds.services.news_import.requests.get', return_value=feed_response):
             run_news_import_job(job.id)
@@ -100,6 +108,8 @@ class NewsImportProgressTests(TestCase):
             redirect_source='7',
             redirect_status='unread',
             redirect_relevance='medium',
+            redirect_effective_date_from='2026-05-01',
+            redirect_effective_date_to='2026-05-31',
             result_messages=[
                 {
                     'level': 'success',
@@ -110,5 +120,11 @@ class NewsImportProgressTests(TestCase):
 
         response = self.client.get(reverse('feeds:finalize_refresh_news_job', args=[job.id]), follow=True)
 
-        self.assertRedirects(response, f"{reverse('feeds:news')}?q=stf&source=7&status=unread&relevance=medium")
+        self.assertRedirects(
+            response,
+            (
+                f"{reverse('feeds:news')}?q=stf&source=7&status=unread&relevance=medium"
+                '&effective_date_from=2026-05-01&effective_date_to=2026-05-31'
+            ),
+        )
         self.assertContains(response, 'Atualização concluída: 1 nova(s) e 0 já existente(s).')

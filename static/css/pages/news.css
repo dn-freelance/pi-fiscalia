@@ -31,7 +31,7 @@
 }
 
 .news-refresh-button,
-.news-filter-button {
+.news-search-button {
   align-items: center;
   background-color: var(--primary-color);
   border: 1px solid var(--primary-color);
@@ -51,7 +51,7 @@
 }
 
 .news-refresh-button:hover,
-.news-filter-button:hover {
+.news-search-button:hover {
   background-color: var(--primary-color-hover);
   border-color: var(--primary-color-hover);
 }
@@ -74,11 +74,12 @@
   align-items: center;
   display: grid;
   gap: 14px;
-  grid-template-columns: minmax(0, 1.7fr) repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
 }
 
 .news-search-field,
-.news-select-field {
+.news-select-field,
+.news-date-field {
   background-color: #ffffff;
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -89,7 +90,12 @@
 .news-search-field {
   align-items: center;
   gap: 10px;
+  grid-column: 1 / span 8;
   padding: 0 16px;
+}
+
+.news-search-button {
+  grid-column: 9 / span 2;
 }
 
 .news-search-field svg {
@@ -107,14 +113,17 @@
   outline: none;
 }
 
-.news-select-field {
+.news-select-field,
+.news-date-field {
   flex-direction: column;
   gap: 4px;
+  grid-column: span 2;
   justify-content: center;
   padding: 8px 14px;
 }
 
-.news-select-field span {
+.news-select-field span,
+.news-date-field span {
   color: var(--text-muted);
   font-size: 11px;
   font-weight: 700;
@@ -122,7 +131,8 @@
   text-transform: uppercase;
 }
 
-.news-select-field select {
+.news-select-field select,
+.news-date-field input {
   background: transparent;
   border: 0;
   color: var(--text-main);
@@ -130,6 +140,10 @@
   font-weight: 600;
   outline: none;
   width: 100%;
+}
+
+.news-date-field input {
+  min-height: 24px;
 }
 
 .news-results-bar {
@@ -533,7 +547,7 @@
   }
 
   .news-refresh-button,
-  .news-filter-button,
+  .news-search-button,
   .news-bulk-button {
     width: 100%;
   }

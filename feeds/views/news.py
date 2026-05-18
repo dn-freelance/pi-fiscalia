@@ -6,6 +6,7 @@ from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
 
 from feeds.models import NewsImportJob, NewsItem, NewsItemAnalysis, Source
@@ -60,6 +61,12 @@ def index(request):
             analysis__impact_level=filters['relevance'],
         )
 
+    if filters['effective_date_from']:
+        news_items = news_items.filter(analysis__effective_date__gte=filters['effective_date_from'])
+
+    if filters['effective_date_to']:
+        news_items = news_items.filter(analysis__effective_date__lte=filters['effective_date_to'])
+
     news_items = news_items.order_by(
         Coalesce('published_at', 'created_at').desc(),
         '-created_at',
@@ -74,6 +81,8 @@ def index(request):
         'selected_source': filters['source'],
         'selected_status': filters['status'],
         'selected_relevance': filters['relevance'],
+        'selected_effective_date_from': filters['effective_date_from_raw'],
+        'selected_effective_date_to': filters['effective_date_to_raw'],
         'unread_count': NewsItem.objects.filter(is_read=False).count(),
     }
     return render(request, 'pages/news/index.html', context)
@@ -86,6 +95,8 @@ def refresh_news(request):
         redirect_source=request.POST.get('source', '').strip(),
         redirect_status=request.POST.get('status', STATUS_ALL).strip() or STATUS_ALL,
         redirect_relevance=request.POST.get('relevance', RELEVANCE_ALL).strip() or RELEVANCE_ALL,
+        redirect_effective_date_from=request.POST.get('effective_date_from', '').strip(),
+        redirect_effective_date_to=request.POST.get('effective_date_to', '').strip(),
     )
 
     if request.headers.get('X-Fiscalia-Sync-Import') == '1':
@@ -184,19 +195,33 @@ def _filters_from_query(request):
         except ValueError:
             selected_source = ''
 
+    selected_effective_date_from = request.GET.get('effective_date_from', '').strip()
+    selected_effective_date_to = request.GET.get('effective_date_to', '').strip()
+
     return {
         'query': request.GET.get('q', '').strip(),
         'source': selected_source,
         'source_id': source_id,
         'status': selected_status,
         'relevance': selected_relevance,
+        'effective_date_from_raw': selected_effective_date_from,
+        'effective_date_to_raw': selected_effective_date_to,
+        'effective_date_from': parse_date(selected_effective_date_from) if selected_effective_date_from else None,
+        'effective_date_to': parse_date(selected_effective_date_to) if selected_effective_date_to else None,
     }
 
 
 def _redirect_with_filters(request):
     params = {}
 
-    for field_name in ('q', 'source', 'status', 'relevance'):
+    for field_name in (
+        'q',
+        'source',
+        'status',
+        'relevance',
+        'effective_date_from',
+        'effective_date_to',
+    ):
         value = request.POST.get(field_name, '').strip()
         if value and not (
             (field_name == 'status' and value == STATUS_ALL)
@@ -227,6 +252,12 @@ def _redirect_with_job_filters(job):
 
     if job.redirect_relevance and job.redirect_relevance != RELEVANCE_ALL:
         params['relevance'] = job.redirect_relevance
+
+    if job.redirect_effective_date_from:
+        params['effective_date_from'] = job.redirect_effective_date_from
+
+    if job.redirect_effective_date_to:
+        params['effective_date_to'] = job.redirect_effective_date_to
 
     base_url = reverse('feeds:news')
     query_string = urlencode(params)
