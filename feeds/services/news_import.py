@@ -18,8 +18,16 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 
 from feeds.models import NewsItem, Source
+from feeds.services.news_analysis import build_news_analysis_service
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_REQUEST_HEADERS = {
+    'User-Agent': 'PI-Fiscalia/1.0 (+https://127.0.0.1:8000)',
+    'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.8',
+    'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Cache-Control': 'no-cache',
+}
 
 STRUCTURAL_PLONE_TYPES = {'Collection', 'File', 'Folder', 'Image', 'Link'}
 FORUM_SUMMARY_SUFFIX_PATTERN = re.compile(
@@ -50,9 +58,14 @@ class NewsImportResult:
     existing_count: int = 0
     error_count: int = 0
     skipped_count: int = 0
+    analysis_failure_count: int = 0
+    analysis_skipped_count: int = 0
+    analysis_halted: bool = False
+    analysis_halt_reason: str = ''
     source_count: int = 0
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    analysis_warnings: list[str] = field(default_factory=list)
 
     def summary_message(self):
         return (
@@ -73,19 +86,53 @@ class NewsImportResult:
         return f'{self.skipped_count} notÃ­cia(s) ignorada(s): ' + '; '.join(self.warnings)
 
 
+    def analysis_warning_messages(self):
+        messages = []
+
+        if self.analysis_halted:
+            affected_count = self.analysis_failure_count + self.analysis_skipped_count
+            halted_message = (
+                'IA foi interrompida nesta atualização por limite do provider. '
+                f'{affected_count} notícia(s) foram importadas sem análise.'
+            )
+            if self.analysis_halt_reason:
+                halted_message = f'{halted_message} {self.analysis_halt_reason}'
+
+            messages.append(halted_message)
+
+        if self.analysis_warnings and self.analysis_failure_count:
+            details = '; '.join(self.analysis_warnings[:3])
+            if len(self.analysis_warnings) > 3:
+                details = f'{details}; ...'
+
+            messages.append(
+                f'IA não conseguiu concluir a análise de {self.analysis_failure_count} notícia(s): {details}'
+            )
+        elif self.analysis_warnings:
+            messages.extend(self.analysis_warnings)
+
+        return messages
+
+
 def import_news_items(timeout=15):
     result = NewsImportResult()
+    analysis_service, analysis_warning = build_news_analysis_service()
     sources = Source.objects.filter(active=True).order_by('name')
     result.source_count = sources.count()
 
+    if analysis_warning:
+        result.analysis_warnings.append(analysis_warning)
+
     for source in sources:
         try:
-            response = requests.get(source.url, timeout=timeout)
-            response.raise_for_status()
-            _import_source_entries(source, response, result, timeout)
+            response = _request_url(source.url, timeout)
+            _import_source_entries(source, response, result, timeout, analysis_service)
         except requests.RequestException as error:
+            if _try_import_source_with_listing_fallback(source, result, timeout, analysis_service, error):
+                continue
+
             logger.warning('Erro ao atualizar feed %s: %s', source.url, error)
-            _register_error(result, source, 'falha ao buscar o feed RSS')
+            _register_error(result, source, _describe_feed_fetch_error(error))
         except Exception as error:  # pragma: no cover - proteção extra para feeds inválidos
             logger.exception('Erro inesperado ao importar feed %s', source.url)
             _register_error(result, source, f'erro inesperado: {error}')
@@ -93,12 +140,12 @@ def import_news_items(timeout=15):
     return result
 
 
-def _import_source_entries(source, response, result, timeout):
+def _import_source_entries(source, response, result, timeout, analysis_service):
     feed = feedparser.parse(response.content)
     plone_item_types = _extract_plone_item_types(response.content)
 
     if _should_use_gov_br_listing_fallback(source.url, plone_item_types):
-        _import_gov_br_listing(source, feed, response.url, result, timeout)
+        _import_gov_br_listing(source, feed, response.url, result, timeout, analysis_service)
         return
 
     if not feed.entries:
@@ -107,6 +154,7 @@ def _import_source_entries(source, response, result, timeout):
 
     imported_count = 0
     skipped_count = 0
+    analysis_candidates = []
 
     for entry in feed.entries:
         try:
@@ -122,20 +170,59 @@ def _import_source_entries(source, response, result, timeout):
 
         try:
             with transaction.atomic():
-                created = _upsert_news_item(source, _build_dedupe_key(entry, payload), payload)
+                news_item, created, _ = _upsert_news_item(source, _build_dedupe_key(entry, payload), payload)
         except Exception:
             logger.warning('Item %s da fonte %s foi ignorado por erro ao persistir', payload['link'], source.url, exc_info=True)
             skipped_count += 1
             continue
 
         imported_count += 1
+        analysis_candidates.append(news_item)
+
         if created:
             result.created_count += 1
             continue
 
         result.existing_count += 1
 
+    _run_news_analysis_batch(analysis_candidates, analysis_service, result)
     _finalize_source_processing(result, source, imported_count, skipped_count, feed)
+
+
+def _request_url(url, timeout, accept_html=False):
+    headers = dict(DEFAULT_REQUEST_HEADERS)
+    if accept_html:
+        headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+
+    response = requests.get(url, timeout=timeout, headers=headers)
+    response.raise_for_status()
+    return response
+
+
+def _try_import_source_with_listing_fallback(source, result, timeout, analysis_service, original_error):
+    if not _is_gov_br_source(source.url):
+        return False
+
+    logger.warning(
+        'Falha ao buscar feed RSS %s. Tentando fallback direto pela listagem gov.br: %s',
+        source.url,
+        original_error,
+    )
+    try:
+        _import_gov_br_listing(source, feed=None, source_url=source.url, result=result, timeout=timeout, analysis_service=analysis_service)
+    except requests.RequestException as listing_error:
+        logger.warning('Fallback direto da listagem gov.br também falhou em %s: %s', source.url, listing_error)
+        return False
+
+    return True
+
+
+def _describe_feed_fetch_error(error):
+    status_code = getattr(getattr(error, 'response', None), 'status_code', None)
+    if status_code:
+        return f'falha ao buscar o feed RSS (HTTP {status_code})'
+
+    return 'falha ao buscar o feed RSS'
 
 
 def _build_news_payload(entry):
@@ -229,6 +316,54 @@ def _register_warning(result, source, skipped_count):
     result.warnings.append(
         f'{source.name}: {skipped_count} item(ns) ignorado(s) por dados incompletos ou erro no processamento'
     )
+
+
+def _register_analysis_warning(result, source, news_item, message):
+    result.analysis_failure_count += 1
+    result.analysis_warnings.append(f'{source.name} / {news_item.title}: {message}')
+
+
+def _run_news_analysis_batch(news_items, analysis_service, result):
+    if analysis_service is None or not news_items:
+        return
+
+    if result.analysis_halted:
+        result.analysis_skipped_count += len(news_items)
+        return
+
+    execution_result = analysis_service.analyze_news_items(news_items)
+
+    for news_item, error_message in execution_result.failure_details:
+        logger.warning('IA nÃ£o conseguiu analisar o informativo %s: %s', news_item.link, error_message)
+        _register_analysis_warning(result, news_item.source, news_item, error_message)
+
+    if execution_result.halted:
+        logger.warning('IA foi interrompida durante a atualizaÃ§Ã£o dos informativos: %s', execution_result.halt_reason)
+        result.analysis_halted = True
+        result.analysis_halt_reason = execution_result.halt_reason
+        result.analysis_skipped_count += execution_result.halted_pending_count
+
+    return
+
+    try:
+        analysis_service.analyze_news_item(news_item)
+    except NewsAnalysisRateLimitError as error:
+        logger.warning('IA atingiu o limite de requisições ao analisar o informativo %s: %s', news_item.link, error)
+        try:
+            analysis_service.persist_failure(news_item, str(error))
+        except Exception:  # pragma: no cover - proteção adicional
+            logger.exception('Não foi possível persistir a falha de IA do informativo %s', news_item.link)
+
+        result.analysis_failure_count += 1
+        result.analysis_halted = True
+        result.analysis_halt_reason = str(error)
+    except NewsAnalysisError as error:
+        logger.warning('IA não conseguiu analisar o informativo %s: %s', news_item.link, error)
+        try:
+            analysis_service.persist_failure(news_item, str(error))
+        except Exception:  # pragma: no cover - proteção adicional
+            logger.exception('Não foi possível persistir a falha de IA do informativo %s', news_item.link)
+        _register_analysis_warning(result, news_item.source, news_item, str(error))
 
 
 def _finalize_source_processing(result, source, imported_count, skipped_count, feed=None):
@@ -329,6 +464,9 @@ def _is_gov_br_source(source_url):
 
 
 def _cleanup_structural_items(source, feed):
+    if feed is None:
+        return
+
     bad_links = [
         _clean_url(entry.get('link', ''))
         for entry in feed.entries
@@ -347,7 +485,7 @@ def _upsert_news_item(source, dedupe_key, payload):
     )
 
     if created:
-        return True
+        return news_item, True, True
 
     changed_fields = []
     for field_name, field_value in payload.items():
@@ -359,13 +497,12 @@ def _upsert_news_item(source, dedupe_key, payload):
         changed_fields.append('updated_at')
         news_item.save(update_fields=changed_fields)
 
-    return False
+    return news_item, False, bool(changed_fields)
 
 
-def _import_gov_br_listing(source, feed, source_url, result, timeout):
+def _import_gov_br_listing(source, feed, source_url, result, timeout, analysis_service):
     listing_url = _resolve_gov_br_listing_url(source_url)
-    response = requests.get(listing_url, timeout=timeout)
-    response.raise_for_status()
+    response = _request_url(listing_url, timeout, accept_html=True)
 
     entries = _extract_gov_br_news_entries(response.text)
     if not entries:
@@ -384,6 +521,7 @@ def _import_gov_br_listing(source, feed, source_url, result, timeout):
 
     imported_count = 0
     skipped_count = 0
+    analysis_candidates = []
 
     for entry in entries:
         existing_item = existing_items_by_link.get(entry['link'])
@@ -409,7 +547,7 @@ def _import_gov_br_listing(source, feed, source_url, result, timeout):
 
         try:
             with transaction.atomic():
-                created = _upsert_news_item(
+                news_item, created, _ = _upsert_news_item(
                     source,
                     _build_dedupe_key({'link': entry['link']}, payload),
                     payload,
@@ -425,12 +563,15 @@ def _import_gov_br_listing(source, feed, source_url, result, timeout):
             continue
 
         imported_count += 1
+        analysis_candidates.append(news_item)
+
         if created:
             result.created_count += 1
             continue
 
         result.existing_count += 1
 
+    _run_news_analysis_batch(analysis_candidates, analysis_service, result)
     _finalize_source_processing(result, source, imported_count, skipped_count)
 
 
@@ -480,8 +621,7 @@ def _parse_gov_br_listing_date(date_value):
 
 def _load_gov_br_article_published_at(article_url, timeout):
     try:
-        response = requests.get(article_url, timeout=timeout)
-        response.raise_for_status()
+        response = _request_url(article_url, timeout, accept_html=True)
     except requests.RequestException:
         return None
 

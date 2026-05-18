@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from feeds.models.source import Source
@@ -37,3 +38,10 @@ class NewsItem(models.Model):
     @property
     def displayed_at(self):
         return self.published_at or self.created_at
+
+    @property
+    def analysis_or_none(self):
+        try:
+            return self.analysis
+        except ObjectDoesNotExist:
+            return None

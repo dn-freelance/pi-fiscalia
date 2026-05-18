@@ -6,7 +6,17 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
-    DEBUG=(bool, False)
+    DEBUG=(bool, False),
+    NEWS_AI_ENABLED=(bool, False),
+    NEWS_AI_PROVIDER=(str, 'openai'),
+    NEWS_AI_MODEL=(str, 'gpt-4o-mini'),
+    NEWS_AI_TIMEOUT_SECONDS=(int, 45),
+    NEWS_AI_PIPELINE_VERSION=(str, 'v1'),
+    NEWS_AI_BATCH_SIZE=(int, 5),
+    OPENAI_API_KEY=(str, ''),
+    OPENAI_BASE_URL=(str, 'https://api.openai.com/v1'),
+    OPENAI_ORG_ID=(str, ''),
+    OPENAI_PROJECT=(str, ''),
 )
 
 # Reading .env file
@@ -121,3 +131,16 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+NEWS_AI = {
+    'ENABLED': env('NEWS_AI_ENABLED'),
+    'PROVIDER': env('NEWS_AI_PROVIDER'),
+    'MODEL': env('NEWS_AI_MODEL'),
+    'TIMEOUT_SECONDS': env('NEWS_AI_TIMEOUT_SECONDS'),
+    'PIPELINE_VERSION': env('NEWS_AI_PIPELINE_VERSION'),
+    'BATCH_SIZE': env('NEWS_AI_BATCH_SIZE'),
+    'OPENAI_API_KEY': env('OPENAI_API_KEY'),
+    'OPENAI_BASE_URL': env('OPENAI_BASE_URL'),
+    'OPENAI_ORG_ID': env('OPENAI_ORG_ID'),
+    'OPENAI_PROJECT': env('OPENAI_PROJECT'),
+}

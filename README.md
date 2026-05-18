@@ -36,11 +36,31 @@ DEBUG=True
 SECRET_KEY=django-insecure-sua-chave-aqui
 ALLOWED_HOSTS=127.0.0.1,localhost
 DATABASE_URL=sqlite:///db.sqlite3
+NEWS_AI_ENABLED=False
+NEWS_AI_PROVIDER=openai
+NEWS_AI_MODEL=gpt-4o-mini
+NEWS_AI_TIMEOUT_SECONDS=45
+NEWS_AI_PIPELINE_VERSION=v1
+NEWS_AI_BATCH_SIZE=5
+OPENAI_API_KEY=
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_ORG_ID=
+OPENAI_PROJECT=
 ```
 
 ### 5. Executar as migrações iniciais
 ```bash
 python manage.py migrate
+```
+
+### IA opcional nos informativos
+- Para ativar a análise por IA durante o botão `Atualizar`, defina `NEWS_AI_ENABLED=True`.
+- `NEWS_AI_BATCH_SIZE` controla quantas notícias são enviadas por chamada ao provider. O padrão é `5`.
+- A V1 usa provider `openai` e exige `OPENAI_API_KEY`.
+- Se a IA estiver desabilitada ou configurada incorretamente, os informativos continuam sendo importados normalmente.
+- Para reprocessar informativos antigos com a versão atual do pipeline de IA, use:
+```bash
+python manage.py backfill_news_analysis
 ```
 
 ### 6. Iniciar o servidor de desenvolvimento

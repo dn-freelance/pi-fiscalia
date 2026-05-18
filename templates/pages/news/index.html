@@ -114,6 +114,7 @@
     <div class="news-list">
         {% for item in news_items %}
             <article class="news-card {% if not item.is_read %}is-unread{% endif %}" id="article-news-card-{{ item.id }}">
+                {% with analysis=item.analysis_or_none %}
                 <div class="news-card-header">
                     <div class="news-card-leading">
                         <label class="news-card-checkbox" for="input-news-select-{{ item.id }}">
@@ -146,10 +147,56 @@
 
                 <h2 class="news-card-title">{{ item.title }}</h2>
 
+                {% if analysis and analysis.summary %}
+                    <div class="news-ai-summary">
+                        <i data-lucide="sparkles"></i>
+                        <span>{{ analysis.summary }}</span>
+                    </div>
+                {% endif %}
+
                 {% if item.summary %}
                     <p class="news-card-description">
                         {{ item.summary|truncatechars:420 }}
                     </p>
+                {% endif %}
+
+                {% if analysis and analysis.has_impact %}
+                    <div class="news-impact-box">
+                        <div class="news-impact-content">
+                            <i data-lucide="triangle-alert"></i>
+                            {% if analysis.impact_label %}
+                                <span class="news-impact-badge news-impact-badge-{{ analysis.impact_level }}">{{ analysis.impact_label }}</span>
+                            {% endif %}
+                            {% if analysis.impact_context_display %}
+                                <span>{{ analysis.impact_context_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if analysis and analysis.has_keywords %}
+                    <div class="news-keywords-list">
+                        {% for keyword in analysis.keywords %}
+                            <span class="news-keyword-chip">{{ keyword }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% if analysis and analysis.has_effective_date_display or analysis and analysis.has_importance_score %}
+                    <div class="news-card-meta">
+                        <div class="news-card-meta-left">
+                            {% if analysis.has_effective_date_display %}
+                                <span class="news-meta-item news-meta-item-effective-date">
+                                    <i data-lucide="calendar-days"></i>
+                                    <span>Vigência: {{ analysis.effective_date_display }}</span>
+                                </span>
+                            {% endif %}
+
+                            {% if analysis.has_importance_score %}
+                                <span class="news-meta-item news-score-badge">Score: {{ analysis.importance_score }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
                 {% endif %}
 
                 <div class="news-card-footer">
@@ -169,6 +216,7 @@
                         <span>Ver original</span>
                     </a>
                 </div>
+                {% endwith %}
             </article>
         {% empty %}
             <div class="news-empty-state">

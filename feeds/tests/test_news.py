@@ -1,20 +1,38 @@
+import json
 from datetime import timedelta
 from unittest.mock import patch
 
 import requests
+from django.core.management import call_command
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from feeds.models import NewsItem, Source, SourceCategory
+from feeds.models import NewsItem, NewsItemAnalysis, Source, SourceCategory
 
 
 class DummyResponse:
-    def __init__(self, content, status_code=200, url='https://example.com/rss'):
+    def __init__(self, content, status_code=200, url='https://example.com/rss', headers=None):
         self.text = content
         self.content = content.encode('utf-8')
         self.status_code = status_code
         self.url = url
+        self.headers = headers or {'Content-Type': 'text/html; charset=utf-8'}
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise requests.HTTPError(f'HTTP {self.status_code}')
+
+
+class DummyJsonResponse:
+    def __init__(self, payload, status_code=200, headers=None):
+        self.payload = payload
+        self.status_code = status_code
+        self.headers = headers or {}
+
+    def json(self):
+        return self.payload
 
     def raise_for_status(self):
         if self.status_code >= 400:
@@ -67,6 +85,64 @@ def build_atom_feed(entries):
         {"".join(xml_entries)}
     </feed>
     '''
+
+
+def build_article_page(title, paragraphs):
+    paragraph_html = ''.join(f'<p>{paragraph}</p>' for paragraph in paragraphs)
+    return f'''
+    <html>
+        <head><title>{title}</title></head>
+        <body>
+            <article>
+                <h1>{title}</h1>
+                {paragraph_html}
+            </article>
+        </body>
+    </html>
+    '''
+
+
+def build_openai_analysis_payload(summary='Resumo IA', impact_level='high', impact_context='Impacto relevante.', keywords=None, importance_score=93, effective_date='2026-12-01', effective_date_label=''):
+    if keywords is None:
+        keywords = ['ICMS', 'SaaS', 'Jurisprudência']
+
+    return {
+        'output': [
+            {
+                'content': [
+                    {
+                        'type': 'output_text',
+                        'text': (
+                            '{'
+                            f'"summary": {json.dumps(summary)}, '
+                            f'"impact_level": {json.dumps(impact_level)}, '
+                            f'"impact_context": {json.dumps(impact_context)}, '
+                            f'"keywords": {json.dumps(keywords)}, '
+                            f'"importance_score": {json.dumps(importance_score)}, '
+                            f'"effective_date": {json.dumps(effective_date)}, '
+                            f'"effective_date_label": {json.dumps(effective_date_label)}'
+                            '}'
+                        ),
+                    }
+                ]
+            }
+        ]
+    }
+
+
+def build_ai_settings(enabled=True):
+    return {
+        'ENABLED': enabled,
+        'PROVIDER': 'openai',
+        'MODEL': 'gpt-4o-mini',
+        'TIMEOUT_SECONDS': 15,
+        'PIPELINE_VERSION': 'v1',
+        'BATCH_SIZE': 5,
+        'OPENAI_API_KEY': 'test-key',
+        'OPENAI_BASE_URL': 'https://api.openai.com/v1',
+        'OPENAI_ORG_ID': '',
+        'OPENAI_PROJECT': '',
+    }
 
 
 def build_plone_structural_feed():
@@ -168,6 +244,7 @@ def build_gov_br_response_map():
     }
 
 
+@override_settings(NEWS_AI=build_ai_settings(enabled=False))
 class NewsViewTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -640,7 +717,7 @@ class NewsViewTests(TestCase):
 
         with patch(
             'feeds.services.news_import.requests.get',
-            side_effect=lambda url, timeout: responses_by_url[url],
+            side_effect=lambda url, **kwargs: responses_by_url[url],
         ):
             response = self.client.post(reverse('feeds:refresh_news'), follow=True)
 
@@ -661,6 +738,30 @@ class NewsViewTests(TestCase):
         self.assertEqual(localized_published_at.hour, 10)
         self.assertEqual(localized_published_at.minute, 46)
 
+    def test_refresh_news_falls_back_to_gov_br_listing_when_feed_request_fails(self):
+        source = Source.objects.create(
+            name='Receita Federal',
+            url='https://www.gov.br/receitafederal/pt-br/assuntos/noticias/RSS',
+            category=self.federal,
+            active=True,
+        )
+        responses_by_url = build_gov_br_response_map()
+        responses_by_url['https://www.gov.br/receitafederal/pt-br/assuntos/noticias/RSS'] = DummyResponse(
+            'forbidden',
+            status_code=403,
+            url='https://www.gov.br/receitafederal/pt-br/assuntos/noticias/RSS',
+        )
+
+        with patch(
+            'feeds.services.news_import.requests.get',
+            side_effect=lambda url, **kwargs: responses_by_url[url],
+        ):
+            response = self.client.post(reverse('feeds:refresh_news'), follow=True)
+
+        self.assertContains(response, 'Atualização concluída: 2 nova(s) e 0 já existente(s).')
+        self.assertNotContains(response, 'Receita Federal: falha ao buscar o feed RSS')
+        self.assertEqual(NewsItem.objects.filter(source=source).count(), 2)
+
     def test_refresh_news_removes_bad_structural_items_when_gov_br_fallback_runs(self):
         source = Source.objects.create(
             name='Receita Federal',
@@ -680,7 +781,7 @@ class NewsViewTests(TestCase):
 
         with patch(
             'feeds.services.news_import.requests.get',
-            side_effect=lambda url, timeout: responses_by_url[url],
+            side_effect=lambda url, **kwargs: responses_by_url[url],
         ):
             self.client.post(reverse('feeds:refresh_news'))
 
@@ -714,7 +815,7 @@ class NewsViewTests(TestCase):
 
         with patch(
             'feeds.services.news_import.requests.get',
-            side_effect=lambda url, timeout: responses_by_url[url],
+            side_effect=lambda url, **kwargs: responses_by_url[url],
         ):
             response = self.client.post(reverse('feeds:refresh_news'), follow=True)
 

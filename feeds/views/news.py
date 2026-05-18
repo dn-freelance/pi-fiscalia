@@ -25,7 +25,7 @@ STATUS_OPTIONS = [
 
 def index(request):
     filters = _filters_from_query(request)
-    news_items = NewsItem.objects.select_related('source', 'source__category')
+    news_items = NewsItem.objects.select_related('source', 'source__category', 'analysis')
 
     if filters['query']:
         news_items = news_items.filter(
@@ -74,6 +74,9 @@ def refresh_news(request):
 
     if result.skipped_count:
         messages.warning(request, result.warning_message())
+
+    for warning_message in result.analysis_warning_messages():
+        messages.warning(request, warning_message)
 
     if result.error_count:
         messages.error(request, result.error_message())

@@ -26,6 +26,12 @@
   color: #b91c1c;
 }
 
+.feedback-message.warning {
+  background-color: #fffbeb;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
 /* Toast notifications */
 .toast-container {
   bottom: 24px;
