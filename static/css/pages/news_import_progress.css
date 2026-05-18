@@ -1,0 +1,315 @@
+.news-progress-page {
+  margin: 0 auto;
+  max-width: 1040px;
+  width: 100%;
+}
+
+.news-progress-hero {
+  align-items: stretch;
+  background:
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 36%),
+    linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  border: 1px solid #dbe4f0;
+  border-radius: 28px;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.06);
+  display: grid;
+  gap: 24px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+  margin-bottom: 22px;
+  overflow: hidden;
+  padding: 28px;
+}
+
+.news-progress-copy {
+  align-self: center;
+}
+
+.news-progress-kicker {
+  color: #1d4ed8;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.news-progress-title {
+  color: var(--text-main);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+
+.news-progress-description {
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.75;
+  margin-bottom: 18px;
+  max-width: 620px;
+}
+
+.news-progress-status-pill {
+  align-items: center;
+  background-color: #eef5ff;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  color: #1d4ed8;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 16px;
+}
+
+.news-progress-status-dot {
+  animation: pulseProgress 1.6s ease infinite;
+  background-color: #2563eb;
+  border-radius: 999px;
+  display: inline-flex;
+  height: 10px;
+  width: 10px;
+}
+
+.news-progress-illustration-card {
+  align-items: center;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(92, 109, 89, 0.2), transparent 42%),
+    linear-gradient(180deg, #f7faf7 0%, #eef5ff 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  display: flex;
+  justify-content: center;
+  min-height: 300px;
+  padding: 18px;
+}
+
+.news-progress-illustration {
+  display: block;
+  max-height: 280px;
+  max-width: 100%;
+  width: 100%;
+}
+
+.news-progress-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.news-progress-card {
+  background-color: #ffffff;
+  border: 1px solid #dbe4f0;
+  border-radius: 22px;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.04);
+  padding: 22px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.news-progress-card.is-active {
+  border-color: #bfd5ff;
+  box-shadow: 0 18px 40px rgba(37, 99, 235, 0.1);
+  transform: translateY(-2px);
+}
+
+.news-progress-card.is-complete {
+  border-color: #bbf7d0;
+}
+
+.news-progress-card.is-paused {
+  border-color: #fde68a;
+}
+
+.news-progress-card-head {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.news-progress-card-head h2 {
+  color: var(--text-main);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.news-progress-card-eyebrow {
+  color: #64748b;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.news-progress-chip {
+  align-items: center;
+  background-color: #e8f1ff;
+  border-radius: 999px;
+  color: #1d4ed8;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  min-height: 28px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.news-progress-chip.secondary {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.news-progress-chip.success {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.news-progress-chip.warning {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.news-progress-card-copy {
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.news-progress-bar-shell {
+  background-color: #edf2f7;
+  border-radius: 999px;
+  height: 12px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.news-progress-bar-fill {
+  background: linear-gradient(90deg, #5c6d59 0%, #2563eb 100%);
+  border-radius: inherit;
+  height: 100%;
+  transition: width 0.4s ease;
+  width: 0;
+}
+
+.news-progress-bar-fill.secondary {
+  background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+}
+
+.news-progress-metrics {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.news-progress-metric {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  min-height: 92px;
+  padding: 14px 16px;
+}
+
+.news-progress-metric-label {
+  color: #64748b;
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.news-progress-metric strong {
+  color: var(--text-main);
+  display: block;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.news-progress-footer {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 20px 6px 0;
+}
+
+.news-progress-footer-text {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.news-progress-return-link {
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  color: var(--text-main);
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.news-progress-return-link:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+@keyframes pulseProgress {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.55;
+    transform: scale(1.18);
+  }
+}
+
+@media (max-width: 940px) {
+  .news-progress-hero,
+  .news-progress-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .news-progress-hero,
+  .news-progress-card {
+    border-radius: 22px;
+    padding: 20px;
+  }
+
+  .news-progress-title {
+    font-size: 26px;
+  }
+
+  .news-progress-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .news-progress-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .news-progress-return-link {
+    width: 100%;
+  }
+}

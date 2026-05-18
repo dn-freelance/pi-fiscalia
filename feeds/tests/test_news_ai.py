@@ -26,6 +26,9 @@ class NewsAnalysisTests(TestCase):
     def setUpTestData(cls):
         cls.federal = SourceCategory.objects.get(name='Federal')
 
+    def setUp(self):
+        self.client.defaults['HTTP_X_FISCALIA_SYNC_IMPORT'] = '1'
+
     def _create_source(self, name='Fonte IA', url='https://example.com/ia/rss'):
         return Source.objects.create(
             name=name,

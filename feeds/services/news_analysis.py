@@ -222,9 +222,24 @@ class NewsAnalysisService:
             reason=batch_result.halt_reason,
         )
 
-    def analyze_news_items(self, news_items):
+    def analyze_news_items(self, news_items, progress_callback=None):
         execution_result = NewsAnalysisBatchExecutionResult()
         prepared_items = []
+        total_count = len(news_items)
+        processed_count = 0
+
+        def report_progress():
+            if progress_callback is None:
+                return
+
+            progress_callback(
+                processed_count=processed_count,
+                total_count=total_count,
+                updated_count=execution_result.updated_count,
+                failed_count=execution_result.failed_count,
+                skipped_count=execution_result.skipped_current_count,
+                halted=execution_result.halted,
+            )
 
         for news_item in news_items:
             try:
@@ -233,10 +248,14 @@ class NewsAnalysisService:
                 self.persist_failure(news_item, str(error))
                 execution_result.failed_count += 1
                 execution_result.failure_details.append((news_item, str(error)))
+                processed_count += 1
+                report_progress()
                 continue
 
             if prepared_item is None:
                 execution_result.skipped_current_count += 1
+                processed_count += 1
+                report_progress()
                 continue
 
             prepared_items.append(prepared_item)
@@ -250,9 +269,16 @@ class NewsAnalysisService:
                 execution_result.halted = True
                 execution_result.halt_reason = str(error)
                 execution_result.halted_pending_count = len(prepared_items) - batch_start
+                report_progress()
                 break
             except NewsAnalysisError:
-                self._analyze_prepared_items_individually(batch, execution_result)
+                processed_count = self._analyze_prepared_items_individually(
+                    batch,
+                    execution_result,
+                    processed_count,
+                    total_count,
+                    progress_callback,
+                )
                 if execution_result.halted:
                     execution_result.halted_pending_count += len(prepared_items) - (batch_start + len(batch))
                     break
@@ -262,7 +288,13 @@ class NewsAnalysisService:
 
             batch_ids = {prepared_item.context.local_id for prepared_item in batch}
             if any(local_id not in batch_ids for local_id in results_by_id):
-                self._analyze_prepared_items_individually(batch, execution_result)
+                processed_count = self._analyze_prepared_items_individually(
+                    batch,
+                    execution_result,
+                    processed_count,
+                    total_count,
+                    progress_callback,
+                )
                 if execution_result.halted:
                     execution_result.halted_pending_count += len(prepared_items) - (batch_start + len(batch))
                     break
@@ -286,9 +318,17 @@ class NewsAnalysisService:
                     self.pipeline_version,
                 )
                 execution_result.updated_count += 1
+                processed_count += 1
+                report_progress()
 
             if missing_items:
-                self._analyze_prepared_items_individually(missing_items, execution_result)
+                processed_count = self._analyze_prepared_items_individually(
+                    missing_items,
+                    execution_result,
+                    processed_count,
+                    total_count,
+                    progress_callback,
+                )
                 if execution_result.halted:
                     execution_result.halted_pending_count += len(prepared_items) - (batch_start + len(batch))
                     break
@@ -334,7 +374,27 @@ class NewsAnalysisService:
             context=context,
         )
 
-    def _analyze_prepared_items_individually(self, prepared_items, execution_result):
+    def _analyze_prepared_items_individually(
+        self,
+        prepared_items,
+        execution_result,
+        processed_count,
+        total_count,
+        progress_callback,
+    ):
+        def report_progress():
+            if progress_callback is None:
+                return
+
+            progress_callback(
+                processed_count=processed_count,
+                total_count=total_count,
+                updated_count=execution_result.updated_count,
+                failed_count=execution_result.failed_count,
+                skipped_count=execution_result.skipped_current_count,
+                halted=execution_result.halted,
+            )
+
         for index, prepared_item in enumerate(prepared_items):
             try:
                 analysis_result = self.provider.analyze(prepared_item.context)
@@ -342,17 +402,22 @@ class NewsAnalysisService:
                 execution_result.halted = True
                 execution_result.halt_reason = str(error)
                 execution_result.halted_pending_count += len(prepared_items) - index
+                report_progress()
                 break
             except NewsAnalysisError as error:
                 self.persist_failure(prepared_item.news_item, str(error))
                 execution_result.failed_count += 1
                 execution_result.failure_details.append((prepared_item.news_item, str(error)))
+                processed_count += 1
+                report_progress()
                 continue
             except requests.RequestException as error:
                 provider_error = f'falha na consulta ao provider: {error}'
                 self.persist_failure(prepared_item.news_item, provider_error)
                 execution_result.failed_count += 1
                 execution_result.failure_details.append((prepared_item.news_item, provider_error))
+                processed_count += 1
+                report_progress()
                 continue
 
             _persist_analysis_success(
@@ -364,6 +429,10 @@ class NewsAnalysisService:
                 self.pipeline_version,
             )
             execution_result.updated_count += 1
+            processed_count += 1
+            report_progress()
+
+        return processed_count
 
 
 def build_news_analysis_service():

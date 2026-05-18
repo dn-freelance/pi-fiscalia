@@ -3,12 +3,13 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.db.models import Q
 from django.db.models.functions import Coalesce
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from feeds.models import NewsItem, Source
-from feeds.services import import_news_items
+from feeds.models import NewsImportJob, NewsItem, Source
+from feeds.services.news_import_jobs import run_news_import_job, start_news_import_job
 
 STATUS_ALL = 'all'
 STATUS_READ = 'read'
@@ -61,27 +62,56 @@ def index(request):
 
 @require_POST
 def refresh_news(request):
-    result = import_news_items()
+    job = NewsImportJob.objects.create(
+        redirect_query=request.POST.get('q', '').strip(),
+        redirect_source=request.POST.get('source', '').strip(),
+        redirect_status=request.POST.get('status', STATUS_ALL).strip() or STATUS_ALL,
+    )
 
-    if result.source_count == 0:
-        messages.error(request, 'Nenhuma fonte ativa disponível para atualização.')
-        return _redirect_with_filters(request)
+    if request.headers.get('X-Fiscalia-Sync-Import') == '1':
+        run_news_import_job(job.id)
+        return redirect('feeds:finalize_refresh_news_job', job_id=job.id)
 
-    if result.created_count or result.existing_count:
-        messages.success(request, result.summary_message())
-    elif result.error_count:
-        messages.error(request, 'Nenhum informativo pÃ´de ser importado com seguranÃ§a nesta atualizaÃ§Ã£o.')
+    start_news_import_job(job.id)
+    return redirect('feeds:refresh_news_progress', job_id=job.id)
 
-    if result.skipped_count:
-        messages.warning(request, result.warning_message())
 
-    for warning_message in result.analysis_warning_messages():
-        messages.warning(request, warning_message)
+def refresh_news_progress(request, job_id):
+    job = get_object_or_404(NewsImportJob, pk=job_id)
+    context = {
+        'job': job,
+        'job_status_url': reverse('feeds:refresh_news_progress_status', args=[job.id]),
+        'job_finalize_url': reverse('feeds:finalize_refresh_news_job', args=[job.id]),
+        'job_payload': _job_payload(job),
+    }
+    return render(request, 'pages/news/import_progress.html', context)
 
-    if result.error_count:
-        messages.error(request, result.error_message())
 
-    return _redirect_with_filters(request)
+def refresh_news_progress_status(request, job_id):
+    job = get_object_or_404(NewsImportJob, pk=job_id)
+    return JsonResponse(_job_payload(job))
+
+
+def finalize_refresh_news_job(request, job_id):
+    job = get_object_or_404(NewsImportJob, pk=job_id)
+
+    if not job.is_finished:
+        return redirect('feeds:refresh_news_progress', job_id=job.id)
+
+    for entry in job.result_messages:
+        level = (entry.get('level') or 'info').strip().lower()
+        text = (entry.get('text') or '').strip()
+        if not text:
+            continue
+
+        if level == 'success':
+            messages.success(request, text)
+        elif level == 'warning':
+            messages.warning(request, text)
+        else:
+            messages.error(request, text)
+
+    return _redirect_with_job_filters(job)
 
 
 @require_POST
@@ -155,6 +185,27 @@ def _redirect_with_filters(request):
     return redirect(base_url)
 
 
+def _redirect_with_job_filters(job):
+    params = {}
+
+    if job.redirect_query:
+        params['q'] = job.redirect_query
+
+    if job.redirect_source:
+        params['source'] = job.redirect_source
+
+    if job.redirect_status and job.redirect_status != STATUS_ALL:
+        params['status'] = job.redirect_status
+
+    base_url = reverse('feeds:news')
+    query_string = urlencode(params)
+
+    if query_string:
+        return redirect(f'{base_url}?{query_string}')
+
+    return redirect(base_url)
+
+
 def _selected_news_ids_from_request(request):
     selected_ids = []
 
@@ -165,3 +216,32 @@ def _selected_news_ids_from_request(request):
             continue
 
     return selected_ids
+
+
+def _job_payload(job):
+    return {
+        'id': str(job.id),
+        'status': job.status,
+        'current_stage': job.current_stage,
+        'stage_title': job.stage_title,
+        'stage_message': job.stage_message,
+        'is_finished': job.is_finished,
+        'finalize_url': reverse('feeds:finalize_refresh_news_job', args=[job.id]),
+        'rss': {
+            'total_sources': job.rss_total_sources,
+            'processed_sources': job.rss_processed_sources,
+            'progress_percent': job.rss_progress_percent,
+            'created_count': job.imported_created_count,
+            'existing_count': job.imported_existing_count,
+            'error_count': job.import_error_count,
+            'skipped_count': job.import_skipped_count,
+        },
+        'analysis': {
+            'enabled': job.analysis_enabled,
+            'total_items': job.analysis_total_items,
+            'processed_items': job.analysis_processed_items,
+            'progress_percent': job.analysis_progress_percent,
+            'failure_count': job.analysis_failure_count,
+            'skipped_count': job.analysis_skipped_count,
+        },
+    }

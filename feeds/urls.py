@@ -11,6 +11,17 @@ urlpatterns = [
 
     path('informativos/', news.index, name='news'),
     path('informativos/atualizar/', news.refresh_news, name='refresh_news'),
+    path('informativos/atualizacoes/<uuid:job_id>/', news.refresh_news_progress, name='refresh_news_progress'),
+    path(
+        'informativos/atualizacoes/<uuid:job_id>/status/',
+        news.refresh_news_progress_status,
+        name='refresh_news_progress_status',
+    ),
+    path(
+        'informativos/atualizacoes/<uuid:job_id>/finalizar/',
+        news.finalize_refresh_news_job,
+        name='finalize_refresh_news_job',
+    ),
     path('informativos/acoes-em-lote/', news.bulk_update_news_read, name='bulk_update_news_read'),
     path('informativos/<int:news_id>/alternar-leitura/', news.toggle_news_read, name='toggle_news_read'),
 

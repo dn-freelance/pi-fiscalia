@@ -251,6 +251,9 @@ class NewsViewTests(TestCase):
         cls.federal = SourceCategory.objects.get(name='Federal')
         cls.estadual = SourceCategory.objects.get(name='Estadual')
 
+    def setUp(self):
+        self.client.defaults['HTTP_X_FISCALIA_SYNC_IMPORT'] = '1'
+
     def test_refresh_news_imports_items_without_duplicates(self):
         Source.objects.create(
             name='Receita Federal',

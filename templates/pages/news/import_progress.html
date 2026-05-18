@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Atualizando Informativos | PI Fiscalia{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/pages/news_import_progress.css' %}">{% endblock %}
+{% block header_title %}Informativos Fiscais{% endblock %}
+{% block header_badge %}<span class="badge-new">Em andamento</span>{% endblock %}
+
+{% block content %}
+<section
+    class="news-progress-page"
+    id="section-news-import-progress"
+    data-status-url="{{ job_status_url }}"
+    data-finalize-url="{{ job_finalize_url }}"
+>
+    <div class="news-progress-hero">
+        <div class="news-progress-copy">
+            <span class="news-progress-kicker">Atualização guiada</span>
+            <h1 class="news-progress-title" id="heading-news-progress-title">{{ job_payload.stage_title|default:"Preparando atualização" }}</h1>
+            <p class="news-progress-description" id="paragraph-news-progress-message">
+                {{ job_payload.stage_message|default:"Estamos reunindo as notícias e preparando a análise com IA." }}
+            </p>
+
+            <div class="news-progress-status-pill" id="div-news-progress-pill">
+                <span class="news-progress-status-dot"></span>
+                <span id="span-news-progress-pill-label">Conectando as etapas da atualização</span>
+            </div>
+        </div>
+
+        <div class="news-progress-illustration-card" aria-hidden="true">
+            <img
+                src="{% static 'images/news/import-progress-bro.svg' %}"
+                alt=""
+                class="news-progress-illustration"
+            >
+        </div>
+    </div>
+
+    <div class="news-progress-grid">
+        <article class="news-progress-card is-active" id="card-news-progress-rss">
+            <div class="news-progress-card-head">
+                <div>
+                    <span class="news-progress-card-eyebrow">Etapa 1</span>
+                    <h2>Importação das notícias</h2>
+                </div>
+                <span class="news-progress-chip" id="chip-news-progress-rss-state">Em andamento</span>
+            </div>
+
+            <p class="news-progress-card-copy">
+                O sistema visita cada fonte ativa, baixa os feeds RSS e organiza os informativos sem duplicar conteúdo.
+            </p>
+
+            <div class="news-progress-bar-shell" aria-hidden="true">
+                <div class="news-progress-bar-fill" id="bar-news-progress-rss"></div>
+            </div>
+
+            <div class="news-progress-metrics">
+                <div class="news-progress-metric">
+                    <span class="news-progress-metric-label">Fontes processadas</span>
+                    <strong id="metric-news-progress-rss-count">0 / 0</strong>
+                </div>
+                <div class="news-progress-metric">
+                    <span class="news-progress-metric-label">Novas notícias</span>
+                    <strong id="metric-news-progress-created">0</strong>
+                </div>
+                <div class="news-progress-metric">
+                    <span class="news-progress-metric-label">Já existentes</span>
+                    <strong id="metric-news-progress-existing">0</strong>
+                </div>
+                <div class="news-progress-metric">
+                    <span class="news-progress-metric-label">Com alerta</span>
+                    <strong id="metric-news-progress-errors">0</strong>
+                </div>
+            </div>
+        </article>
+
+        <article class="news-progress-card" id="card-news-progress-analysis">
+            <div class="news-progress-card-head">
+                <div>
+                    <span class="news-progress-card-eyebrow">Etapa 2</span>
+                    <h2>Análise das notícias com IA</h2>
+                </div>
+                <span class="news-progress-chip secondary" id="chip-news-progress-analysis-state">Aguardando</span>
+            </div>
+
+            <p class="news-progress-card-copy" id="paragraph-news-progress-analysis-copy">
+                Depois da importação, a IA calcula resumo, impacto, score, vigência e palavras-chave para cada notícia nova.
+            </p>
+
+            <div class="news-progress-bar-shell" aria-hidden="true">
+                <div class="news-progress-bar-fill secondary" id="bar-news-progress-analysis"></div>
+            </div>
+
+            <div class="news-progress-metrics">
+                <div class="news-progress-metric">
+                    <span class="news-progress-metric-label">Notícias analisadas</span>
+                    <strong id="metric-news-progress-analysis-count">0 / 0</strong>
+                </div>
+                <div class="news-progress-metric">
+                    <span class="news-progress-metric-label">Falhas de IA</span>
+                    <strong id="metric-news-progress-analysis-failures">0</strong>
+                </div>
+                <div class="news-progress-metric">
+                    <span class="news-progress-metric-label">Sem análise</span>
+                    <strong id="metric-news-progress-analysis-skipped">0</strong>
+                </div>
+            </div>
+        </article>
+    </div>
+
+    <div class="news-progress-footer" id="div-news-progress-footer">
+        <p class="news-progress-footer-text" id="paragraph-news-progress-footer">
+            Assim que tudo terminar, você volta automaticamente para a lista de informativos.
+        </p>
+        <a href="{{ job_finalize_url }}" class="news-progress-return-link" id="link-news-progress-return" hidden>
+            Voltar para os informativos agora
+        </a>
+    </div>
+</section>
+
+{{ job_payload|json_script:"news-import-job-payload" }}
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/pages/news_import_progress.js' %}"></script>
+{% endblock %}
