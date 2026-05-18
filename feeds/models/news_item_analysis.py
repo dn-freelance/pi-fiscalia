@@ -79,13 +79,16 @@ class NewsItemAnalysis(models.Model):
 
     @property
     def effective_date_display(self):
-        if self.effective_date_label:
-            return self.effective_date_label
+        date_text = self.effective_date.strftime('%d/%m/%Y') if self.effective_date is not None else ''
+        label_text = (self.effective_date_label or '').strip()
 
-        if self.effective_date is None:
-            return ''
+        if date_text and label_text:
+            if label_text == date_text:
+                return date_text
 
-        return self.effective_date.strftime('%d/%m/%Y')
+            return f'{date_text} • {label_text}'
+
+        return label_text or date_text
 
     @property
     def has_impact(self):

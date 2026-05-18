@@ -23,6 +23,7 @@ class NewsImportProgressTests(TestCase):
                     'q': 'icms',
                     'source': '12',
                     'status': 'unread',
+                    'relevance': 'high',
                 },
             )
 
@@ -32,6 +33,7 @@ class NewsImportProgressTests(TestCase):
         self.assertEqual(job.redirect_query, 'icms')
         self.assertEqual(job.redirect_source, '12')
         self.assertEqual(job.redirect_status, 'unread')
+        self.assertEqual(job.redirect_relevance, 'high')
         mocked_start.assert_called_once_with(job.id)
 
     def test_run_news_import_job_updates_job_counters_and_messages(self):
@@ -97,6 +99,7 @@ class NewsImportProgressTests(TestCase):
             redirect_query='stf',
             redirect_source='7',
             redirect_status='unread',
+            redirect_relevance='medium',
             result_messages=[
                 {
                     'level': 'success',
@@ -107,5 +110,5 @@ class NewsImportProgressTests(TestCase):
 
         response = self.client.get(reverse('feeds:finalize_refresh_news_job', args=[job.id]), follow=True)
 
-        self.assertRedirects(response, f"{reverse('feeds:news')}?q=stf&source=7&status=unread")
+        self.assertRedirects(response, f"{reverse('feeds:news')}?q=stf&source=7&status=unread&relevance=medium")
         self.assertContains(response, 'Atualização concluída: 1 nova(s) e 0 já existente(s).')

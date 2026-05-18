@@ -436,6 +436,45 @@ class NewsViewTests(TestCase):
         self.assertContains(response, 'Nenhum informativo')
         self.assertContains(response, 'nenhum item')
 
+    def test_news_index_filters_by_relevance_using_ai_impact_level(self):
+        source = Source.objects.create(
+            name='Fonte Fiscal',
+            url='https://example.com/fiscal/rss',
+            category=self.federal,
+            active=True,
+        )
+        high_item = NewsItem.objects.create(
+            source=source,
+            title='Mudança relevante de ICMS',
+            summary='Resumo A',
+            link='https://example.com/a',
+            external_id='a',
+            dedupe_key='a',
+        )
+        low_item = NewsItem.objects.create(
+            source=source,
+            title='Nota institucional',
+            summary='Resumo B',
+            link='https://example.com/b',
+            external_id='b',
+            dedupe_key='b',
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=high_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            impact_level=NewsItemAnalysis.IMPACT_HIGH,
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=low_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            impact_level=NewsItemAnalysis.IMPACT_LOW,
+        )
+
+        response = self.client.get(reverse('feeds:news'), {'relevance': 'high'})
+
+        self.assertContains(response, 'Mudança relevante de ICMS')
+        self.assertNotContains(response, 'Nota institucional')
+
     def test_delete_source_removes_news_items(self):
         source = Source.objects.create(
             name='Fonte com notícias',

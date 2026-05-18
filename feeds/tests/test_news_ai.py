@@ -158,6 +158,7 @@ class NewsAnalysisTests(TestCase):
         self.assertEqual(analysis.keywords, ['ICMS', 'SaaS', 'JurisprudÃªncia'])
         self.assertEqual(analysis.importance_score, 93)
         self.assertEqual(analysis.effective_date_label, '180 dias apÃ³s publicaÃ§Ã£o')
+        self.assertEqual(analysis.effective_date_display, '08/09/2026 • 180 dias apÃ³s publicaÃ§Ã£o')
 
         self.assertContains(response, 'Muito alto para empresas de software.')
         self.assertContains(response, 'ICMS')
@@ -169,6 +170,7 @@ class NewsAnalysisTests(TestCase):
         self.assertIn('news-impact-box', rendered_html)
         self.assertIn('news-keywords-list', rendered_html)
         self.assertIn('Vigência:', rendered_html)
+        self.assertIn('08/09/2026', rendered_html)
         self.assertIn('180 dias', rendered_html)
 
     def test_refresh_news_with_nullable_ai_fields_keeps_layout_without_optional_blocks(self):

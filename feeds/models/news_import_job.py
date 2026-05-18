@@ -54,6 +54,7 @@ class NewsImportJob(models.Model):
     redirect_query = models.CharField('filtro de pesquisa', max_length=255, blank=True)
     redirect_source = models.CharField('filtro de fonte', max_length=20, blank=True)
     redirect_status = models.CharField('filtro de status', max_length=20, blank=True)
+    redirect_relevance = models.CharField('filtro de relevância', max_length=20, blank=True)
 
     result_messages = models.JSONField('mensagens finais', default=list, blank=True)
     error_message = models.CharField('mensagem de erro', max_length=255, blank=True)

@@ -20,6 +20,7 @@
             <input type="hidden" name="q" value="{{ selected_query }}">
             <input type="hidden" name="source" value="{{ selected_source }}">
             <input type="hidden" name="status" value="{{ selected_status }}">
+            <input type="hidden" name="relevance" value="{{ selected_relevance }}">
             <button type="submit" class="news-refresh-button" data-loading-text="Atualizando...">
                 <i data-lucide="refresh-cw"></i>
                 <span>Atualizar</span>
@@ -67,6 +68,15 @@
                 </select>
             </label>
 
+            <label class="news-select-field" for="select-news-relevance">
+                <span>Relevância</span>
+                <select id="select-news-relevance" name="relevance" class="js-news-filter-select">
+                    {% for value, label in relevance_options %}
+                        <option value="{{ value }}"{% if selected_relevance == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
             <button type="submit" class="news-filter-button">
                 <i data-lucide="sliders-horizontal"></i>
                 <span>Filtrar</span>
@@ -84,6 +94,7 @@
             <input type="hidden" name="q" value="{{ selected_query }}">
             <input type="hidden" name="source" value="{{ selected_source }}">
             <input type="hidden" name="status" value="{{ selected_status }}">
+            <input type="hidden" name="relevance" value="{{ selected_relevance }}">
             <div class="news-bulk-bar" id="div-news-bulk-bar" hidden>
                 <div class="news-bulk-bar-left">
                     <span class="news-bulk-count" aria-live="polite">
@@ -205,6 +216,7 @@
                         <input type="hidden" name="q" value="{{ selected_query }}">
                         <input type="hidden" name="source" value="{{ selected_source }}">
                         <input type="hidden" name="status" value="{{ selected_status }}">
+                        <input type="hidden" name="relevance" value="{{ selected_relevance }}">
                         <button type="submit" class="news-read-button {% if item.is_read %}is-read{% endif %}">
                             <i data-lucide="{% if item.is_read %}mail-plus{% else %}mail-check{% endif %}"></i>
                             <span>{% if item.is_read %}Marcar como não lido{% else %}Marcar como lido{% endif %}</span>

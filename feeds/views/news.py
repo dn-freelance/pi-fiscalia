@@ -8,12 +8,16 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 
-from feeds.models import NewsImportJob, NewsItem, Source
+from feeds.models import NewsImportJob, NewsItem, NewsItemAnalysis, Source
 from feeds.services.news_import_jobs import run_news_import_job, start_news_import_job
 
 STATUS_ALL = 'all'
 STATUS_READ = 'read'
 STATUS_UNREAD = 'unread'
+RELEVANCE_ALL = 'all'
+RELEVANCE_HIGH = NewsItemAnalysis.IMPACT_HIGH
+RELEVANCE_MEDIUM = NewsItemAnalysis.IMPACT_MEDIUM
+RELEVANCE_LOW = NewsItemAnalysis.IMPACT_LOW
 BULK_ACTION_MARK_READ = 'mark_read'
 BULK_ACTION_MARK_UNREAD = 'mark_unread'
 
@@ -21,6 +25,13 @@ STATUS_OPTIONS = [
     (STATUS_ALL, 'Todos'),
     (STATUS_UNREAD, 'Não lidos'),
     (STATUS_READ, 'Lidos'),
+]
+
+RELEVANCE_OPTIONS = [
+    (RELEVANCE_ALL, 'Todas'),
+    (RELEVANCE_HIGH, 'Alta'),
+    (RELEVANCE_MEDIUM, 'Média'),
+    (RELEVANCE_LOW, 'Baixa'),
 ]
 
 
@@ -43,6 +54,12 @@ def index(request):
     elif filters['status'] == STATUS_UNREAD:
         news_items = news_items.filter(is_read=False)
 
+    if filters['relevance'] != RELEVANCE_ALL:
+        news_items = news_items.filter(
+            analysis__status=NewsItemAnalysis.STATUS_COMPLETED,
+            analysis__impact_level=filters['relevance'],
+        )
+
     news_items = news_items.order_by(
         Coalesce('published_at', 'created_at').desc(),
         '-created_at',
@@ -52,9 +69,11 @@ def index(request):
         'news_items': news_items,
         'sources': Source.objects.order_by('name'),
         'status_options': STATUS_OPTIONS,
+        'relevance_options': RELEVANCE_OPTIONS,
         'selected_query': filters['query'],
         'selected_source': filters['source'],
         'selected_status': filters['status'],
+        'selected_relevance': filters['relevance'],
         'unread_count': NewsItem.objects.filter(is_read=False).count(),
     }
     return render(request, 'pages/news/index.html', context)
@@ -66,6 +85,7 @@ def refresh_news(request):
         redirect_query=request.POST.get('q', '').strip(),
         redirect_source=request.POST.get('source', '').strip(),
         redirect_status=request.POST.get('status', STATUS_ALL).strip() or STATUS_ALL,
+        redirect_relevance=request.POST.get('relevance', RELEVANCE_ALL).strip() or RELEVANCE_ALL,
     )
 
     if request.headers.get('X-Fiscalia-Sync-Import') == '1':
@@ -152,6 +172,10 @@ def _filters_from_query(request):
     if selected_status not in {STATUS_ALL, STATUS_READ, STATUS_UNREAD}:
         selected_status = STATUS_ALL
 
+    selected_relevance = request.GET.get('relevance', RELEVANCE_ALL).strip() or RELEVANCE_ALL
+    if selected_relevance not in {RELEVANCE_ALL, RELEVANCE_HIGH, RELEVANCE_MEDIUM, RELEVANCE_LOW}:
+        selected_relevance = RELEVANCE_ALL
+
     selected_source = request.GET.get('source', '').strip()
     source_id = None
     if selected_source:
@@ -165,15 +189,19 @@ def _filters_from_query(request):
         'source': selected_source,
         'source_id': source_id,
         'status': selected_status,
+        'relevance': selected_relevance,
     }
 
 
 def _redirect_with_filters(request):
     params = {}
 
-    for field_name in ('q', 'source', 'status'):
+    for field_name in ('q', 'source', 'status', 'relevance'):
         value = request.POST.get(field_name, '').strip()
-        if value and not (field_name == 'status' and value == STATUS_ALL):
+        if value and not (
+            (field_name == 'status' and value == STATUS_ALL)
+            or (field_name == 'relevance' and value == RELEVANCE_ALL)
+        ):
             params[field_name] = value
 
     base_url = reverse('feeds:news')
@@ -196,6 +224,9 @@ def _redirect_with_job_filters(job):
 
     if job.redirect_status and job.redirect_status != STATUS_ALL:
         params['status'] = job.redirect_status
+
+    if job.redirect_relevance and job.redirect_relevance != RELEVANCE_ALL:
+        params['relevance'] = job.redirect_relevance
 
     base_url = reverse('feeds:news')
     query_string = urlencode(params)
