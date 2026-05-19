@@ -647,6 +647,7 @@ class NewsViewTests(TestCase):
                 'q': 'toggle',
                 'source': str(source.id),
                 'status': 'unread',
+                'sort': 'score',
                 'effective_date_from': '2026-05-01',
                 'effective_date_to': '2026-05-31',
             },
@@ -658,7 +659,7 @@ class NewsViewTests(TestCase):
         self.assertEqual(
             response.redirect_chain[0][0],
             (
-                f"{reverse('feeds:news')}?q=toggle&source={source.id}&status=unread"
+                f"{reverse('feeds:news')}?q=toggle&source={source.id}&status=unread&sort=score"
                 '&effective_date_from=2026-05-01&effective_date_to=2026-05-31'
             ),
         )
@@ -690,6 +691,7 @@ class NewsViewTests(TestCase):
                 'q': 'follow',
                 'source': str(source.id),
                 'status': 'unread',
+                'sort': 'impact',
                 'effective_date_from': '2026-05-01',
                 'effective_date_to': '2026-05-31',
             },
@@ -700,7 +702,7 @@ class NewsViewTests(TestCase):
         self.assertEqual(
             response.redirect_chain[0][0],
             (
-                f"{reverse('feeds:news')}?q=follow&source={source.id}&status=unread"
+                f"{reverse('feeds:news')}?q=follow&source={source.id}&status=unread&sort=impact"
                 '&effective_date_from=2026-05-01&effective_date_to=2026-05-31'
             ),
         )
@@ -967,6 +969,7 @@ class NewsViewTests(TestCase):
                 'q': 'lote',
                 'source': str(source.id),
                 'status': 'unread',
+                'sort': 'effective_date',
                 'effective_date_from': '2026-05-01',
                 'effective_date_to': '2026-05-31',
             },
@@ -980,7 +983,7 @@ class NewsViewTests(TestCase):
         self.assertEqual(
             response.redirect_chain[0][0],
             (
-                f"{reverse('feeds:news')}?q=lote&source={source.id}&status=unread"
+                f"{reverse('feeds:news')}?q=lote&source={source.id}&status=unread&sort=effective_date"
                 '&effective_date_from=2026-05-01&effective_date_to=2026-05-31'
             ),
         )
@@ -1065,6 +1068,172 @@ class NewsViewTests(TestCase):
             [fallback_created, newer_published, older_published],
         )
 
+    def test_news_index_orders_by_score_descending(self):
+        source = Source.objects.create(
+            name='Fonte Score',
+            url='https://example.com/score/rss',
+            category=self.federal,
+        )
+        low_score_item = NewsItem.objects.create(
+            source=source,
+            title='Score baixo',
+            summary='Resumo baixo.',
+            link='https://example.com/score-low',
+            external_id='score-low',
+            dedupe_key='dedupe-score-low',
+        )
+        no_score_item = NewsItem.objects.create(
+            source=source,
+            title='Sem score',
+            summary='Resumo sem score.',
+            link='https://example.com/score-none',
+            external_id='score-none',
+            dedupe_key='dedupe-score-none',
+            published_at=timezone.now(),
+        )
+        high_score_item = NewsItem.objects.create(
+            source=source,
+            title='Score alto',
+            summary='Resumo alto.',
+            link='https://example.com/score-high',
+            external_id='score-high',
+            dedupe_key='dedupe-score-high',
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=low_score_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            impact_level=NewsItemAnalysis.IMPACT_LOW,
+            importance_score=15,
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=high_score_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            impact_level=NewsItemAnalysis.IMPACT_HIGH,
+            importance_score=91,
+        )
+
+        response = self.client.get(reverse('feeds:news'), {'sort': 'score'})
+
+        self.assertEqual(
+            list(response.context['news_items']),
+            [high_score_item, low_score_item, no_score_item],
+        )
+
+    def test_news_index_orders_by_impact_descending(self):
+        source = Source.objects.create(
+            name='Fonte Impacto',
+            url='https://example.com/impact/rss',
+            category=self.federal,
+        )
+        low_impact_item = NewsItem.objects.create(
+            source=source,
+            title='Impacto baixo',
+            summary='Resumo baixo.',
+            link='https://example.com/impact-low',
+            external_id='impact-low',
+            dedupe_key='dedupe-impact-low',
+        )
+        no_impact_item = NewsItem.objects.create(
+            source=source,
+            title='Sem impacto',
+            summary='Resumo sem impacto.',
+            link='https://example.com/impact-none',
+            external_id='impact-none',
+            dedupe_key='dedupe-impact-none',
+            published_at=timezone.now(),
+        )
+        high_impact_item = NewsItem.objects.create(
+            source=source,
+            title='Impacto alto',
+            summary='Resumo alto.',
+            link='https://example.com/impact-high',
+            external_id='impact-high',
+            dedupe_key='dedupe-impact-high',
+        )
+        medium_impact_item = NewsItem.objects.create(
+            source=source,
+            title='Impacto medio',
+            summary='Resumo medio.',
+            link='https://example.com/impact-medium',
+            external_id='impact-medium',
+            dedupe_key='dedupe-impact-medium',
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=low_impact_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            impact_level=NewsItemAnalysis.IMPACT_LOW,
+            importance_score=20,
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=high_impact_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            impact_level=NewsItemAnalysis.IMPACT_HIGH,
+            importance_score=40,
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=medium_impact_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            impact_level=NewsItemAnalysis.IMPACT_MEDIUM,
+            importance_score=30,
+        )
+
+        response = self.client.get(reverse('feeds:news'), {'sort': 'impact'})
+
+        self.assertEqual(
+            list(response.context['news_items']),
+            [high_impact_item, medium_impact_item, low_impact_item, no_impact_item],
+        )
+
+    def test_news_index_orders_by_effective_date_when_requested(self):
+        source = Source.objects.create(
+            name='Fonte Vigencia Ordenada',
+            url='https://example.com/effective-date/rss',
+            category=self.federal,
+        )
+        later_effective_item = NewsItem.objects.create(
+            source=source,
+            title='Vigencia mais distante',
+            summary='Resumo distante.',
+            link='https://example.com/effective-later',
+            external_id='effective-later',
+            dedupe_key='dedupe-effective-later',
+        )
+        publication_only_item = NewsItem.objects.create(
+            source=source,
+            title='Somente publicacao',
+            summary='Resumo publicacao.',
+            link='https://example.com/publication-only',
+            external_id='publication-only',
+            dedupe_key='dedupe-publication-only',
+            published_at=timezone.now(),
+        )
+        earlier_effective_item = NewsItem.objects.create(
+            source=source,
+            title='Vigencia mais proxima',
+            summary='Resumo proximo.',
+            link='https://example.com/effective-earlier',
+            external_id='effective-earlier',
+            dedupe_key='dedupe-effective-earlier',
+        )
+        current_date = timezone.localdate()
+        NewsItemAnalysis.objects.create(
+            news_item=later_effective_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=current_date + timedelta(days=10),
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=earlier_effective_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=current_date + timedelta(days=2),
+        )
+
+        response = self.client.get(reverse('feeds:news'), {'sort': 'effective_date'})
+
+        self.assertEqual(
+            list(response.context['news_items']),
+            [earlier_effective_item, later_effective_item, publication_only_item],
+        )
+
     def test_news_index_renders_date_in_prototype_format(self):
         source = Source.objects.create(
             name='Fonte Data',
@@ -1084,6 +1253,36 @@ class NewsViewTests(TestCase):
         response = self.client.get(reverse('feeds:news'))
 
         self.assertContains(response, '18 DE MAR, 2026 ÀS 13:25')
+
+    def test_refresh_news_preserves_selected_sort_after_completion(self):
+        Source.objects.create(
+            name='Fonte Sort',
+            url='https://example.com/sort/rss',
+            category=self.federal,
+            active=True,
+        )
+        response_content = DummyResponse(build_feed([
+            {
+                'title': 'Atualizacao com ordenacao',
+                'link': 'https://example.com/sort-news',
+                'guid': 'sort-news-1',
+                'published_at': 'Tue, 12 May 2026 12:00:00 GMT',
+                'summary': 'Resumo da noticia.',
+            },
+        ]))
+
+        with patch('feeds.services.news_import.requests.get', return_value=response_content):
+            response = self.client.post(
+                reverse('feeds:refresh_news'),
+                {'sort': 'score'},
+                follow=True,
+                HTTP_X_FISCALIA_SYNC_IMPORT='1',
+            )
+
+        self.assertEqual(
+            response.redirect_chain[-1][0],
+            f"{reverse('feeds:news')}?sort=score",
+        )
 
     def test_refresh_news_falls_back_to_gov_br_listing_when_feed_is_structural(self):
         source = Source.objects.create(

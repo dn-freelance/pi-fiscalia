@@ -139,6 +139,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         var filterForm = document.getElementById('form-news-filters');
+        var sortForm = document.getElementById('form-news-sort');
         var refreshForm = document.getElementById('form-news-refresh');
         var selectAllInput = document.getElementById('input-news-select-all');
         var clearSelectionButton = document.getElementById('btn-news-clear-selection');
@@ -154,6 +155,14 @@
             filterForm.querySelectorAll('.news-date-field input').forEach(function (field) {
                 field.addEventListener('change', function () {
                     filterForm.submit();
+                });
+            });
+        }
+
+        if (sortForm) {
+            sortForm.querySelectorAll('.js-news-sort-select').forEach(function (field) {
+                field.addEventListener('change', function () {
+                    sortForm.submit();
                 });
             });
         }

@@ -54,6 +54,7 @@ class NewsImportJob(models.Model):
     redirect_query = models.CharField('filtro de pesquisa', max_length=255, blank=True)
     redirect_source = models.CharField('filtro de fonte', max_length=20, blank=True)
     redirect_status = models.CharField('filtro de status', max_length=20, blank=True)
+    redirect_sort = models.CharField('filtro de ordenação', max_length=30, blank=True)
     redirect_relevance = models.CharField('filtro de relevância', max_length=20, blank=True)
     redirect_effective_date_from = models.CharField('vigência inicial', max_length=10, blank=True)
     redirect_effective_date_to = models.CharField('vigência final', max_length=10, blank=True)

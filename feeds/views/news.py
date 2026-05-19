@@ -3,7 +3,7 @@ from datetime import timedelta
 from urllib.parse import urlencode
 
 from django.contrib import messages
-from django.db.models import F, Q
+from django.db.models import Case, F, IntegerField, Q, Value, When
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -29,9 +29,21 @@ RELEVANCE_ALL = 'all'
 RELEVANCE_HIGH = NewsItemAnalysis.IMPACT_HIGH
 RELEVANCE_MEDIUM = NewsItemAnalysis.IMPACT_MEDIUM
 RELEVANCE_LOW = NewsItemAnalysis.IMPACT_LOW
+SORT_BY_PUBLICATION = 'publication'
+SORT_BY_EFFECTIVE_DATE = 'effective_date'
+SORT_BY_SCORE = 'score'
+SORT_BY_IMPACT = 'impact'
 BULK_ACTION_MARK_READ = 'mark_read'
 BULK_ACTION_MARK_UNREAD = 'mark_unread'
 REMINDER_DAY_OFFSETS = (30, 7, 1, 0)
+
+SORT_OPTIONS = [
+    (SORT_BY_PUBLICATION, 'Data de publicação'),
+    (SORT_BY_EFFECTIVE_DATE, 'Vigência'),
+    (SORT_BY_SCORE, 'Score'),
+    (SORT_BY_IMPACT, 'Impacto'),
+]
+SORT_VALUES = {value for value, _label in SORT_OPTIONS}
 
 STATUS_OPTIONS = [
     (STATUS_ALL, 'Todos'),
@@ -78,10 +90,7 @@ def index(request):
     if filters['effective_date_to']:
         news_items = news_items.filter(analysis__effective_date__lte=filters['effective_date_to'])
 
-    news_items = list(news_items.order_by(
-        Coalesce('published_at', 'created_at').desc(),
-        '-created_at',
-    ))
+    news_items = list(_order_news_items(news_items, filters['sort']))
     tracked_news_ids = set(
         NewsItemFollow.objects.filter(news_item_id__in=[item.id for item in news_items]).values_list('news_item_id', flat=True)
     )
@@ -96,10 +105,12 @@ def index(request):
         'sources': Source.objects.order_by('name'),
         'status_options': STATUS_OPTIONS,
         'relevance_options': RELEVANCE_OPTIONS,
+        'sort_options': SORT_OPTIONS,
         'selected_query': filters['query'],
         'selected_source': filters['source'],
         'selected_status': filters['status'],
         'selected_relevance': filters['relevance'],
+        'selected_sort': filters['sort'],
         'selected_effective_date_from': filters['effective_date_from_raw'],
         'selected_effective_date_to': filters['effective_date_to_raw'],
         'unread_count': NewsItem.objects.filter(is_read=False).count(),
@@ -114,6 +125,7 @@ def refresh_news(request):
         redirect_source=request.POST.get('source', '').strip(),
         redirect_status=request.POST.get('status', STATUS_ALL).strip() or STATUS_ALL,
         redirect_relevance=request.POST.get('relevance', RELEVANCE_ALL).strip() or RELEVANCE_ALL,
+        redirect_sort=_normalize_sort(request.POST.get('sort', SORT_BY_PUBLICATION)),
         redirect_effective_date_from=request.POST.get('effective_date_from', '').strip(),
         redirect_effective_date_to=request.POST.get('effective_date_to', '').strip(),
     )
@@ -292,6 +304,8 @@ def _filters_from_query(request):
     if selected_relevance not in {RELEVANCE_ALL, RELEVANCE_HIGH, RELEVANCE_MEDIUM, RELEVANCE_LOW}:
         selected_relevance = RELEVANCE_ALL
 
+    selected_sort = _normalize_sort(request.GET.get('sort', SORT_BY_PUBLICATION))
+
     selected_source = request.GET.get('source', '').strip()
     source_id = None
     if selected_source:
@@ -309,6 +323,7 @@ def _filters_from_query(request):
         'source_id': source_id,
         'status': selected_status,
         'relevance': selected_relevance,
+        'sort': selected_sort,
         'effective_date_from_raw': selected_effective_date_from,
         'effective_date_to_raw': selected_effective_date_to,
         'effective_date_from': parse_date(selected_effective_date_from) if selected_effective_date_from else None,
@@ -324,6 +339,7 @@ def _redirect_with_filters(request):
         'source',
         'status',
         'relevance',
+        'sort',
         'effective_date_from',
         'effective_date_to',
     ):
@@ -331,6 +347,7 @@ def _redirect_with_filters(request):
         if value and not (
             (field_name == 'status' and value == STATUS_ALL)
             or (field_name == 'relevance' and value == RELEVANCE_ALL)
+            or (field_name == 'sort' and _normalize_sort(value) == SORT_BY_PUBLICATION)
         ):
             params[field_name] = value
 
@@ -358,6 +375,9 @@ def _redirect_with_job_filters(job):
     if job.redirect_relevance and job.redirect_relevance != RELEVANCE_ALL:
         params['relevance'] = job.redirect_relevance
 
+    if job.redirect_sort and job.redirect_sort != SORT_BY_PUBLICATION:
+        params['sort'] = job.redirect_sort
+
     if job.redirect_effective_date_from:
         params['effective_date_from'] = job.redirect_effective_date_from
 
@@ -383,6 +403,68 @@ def _selected_news_ids_from_request(request):
             continue
 
     return selected_ids
+
+
+def _normalize_sort(value):
+    selected_sort = (value or SORT_BY_PUBLICATION).strip() or SORT_BY_PUBLICATION
+    if selected_sort not in SORT_VALUES:
+        return SORT_BY_PUBLICATION
+
+    return selected_sort
+
+
+def _order_news_items(news_items, selected_sort):
+    news_items = news_items.annotate(
+        sort_publication_date=Coalesce('published_at', 'created_at'),
+        sort_has_effective_date=Case(
+            When(analysis__effective_date__isnull=False, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+        sort_has_score=Case(
+            When(analysis__importance_score__isnull=False, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+        sort_impact_rank=Case(
+            When(analysis__impact_level=NewsItemAnalysis.IMPACT_HIGH, then=Value(3)),
+            When(analysis__impact_level=NewsItemAnalysis.IMPACT_MEDIUM, then=Value(2)),
+            When(analysis__impact_level=NewsItemAnalysis.IMPACT_LOW, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        ),
+    )
+
+    if selected_sort == SORT_BY_EFFECTIVE_DATE:
+        return news_items.order_by(
+            '-sort_has_effective_date',
+            'analysis__effective_date',
+            '-sort_publication_date',
+            '-created_at',
+        )
+
+    if selected_sort == SORT_BY_SCORE:
+        return news_items.order_by(
+            '-sort_has_score',
+            '-analysis__importance_score',
+            '-sort_impact_rank',
+            '-sort_publication_date',
+            '-created_at',
+        )
+
+    if selected_sort == SORT_BY_IMPACT:
+        return news_items.order_by(
+            '-sort_impact_rank',
+            '-sort_has_score',
+            '-analysis__importance_score',
+            '-sort_publication_date',
+            '-created_at',
+        )
+
+    return news_items.order_by(
+        '-sort_publication_date',
+        '-created_at',
+    )
 
 
 def _job_payload(job):

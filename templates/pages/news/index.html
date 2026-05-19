@@ -21,6 +21,7 @@
             <input type="hidden" name="source" value="{{ selected_source }}">
             <input type="hidden" name="status" value="{{ selected_status }}">
             <input type="hidden" name="relevance" value="{{ selected_relevance }}">
+            <input type="hidden" name="sort" value="{{ selected_sort }}">
             <input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">
             <input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">
             <button type="submit" class="news-refresh-button" data-loading-text="Atualizando...">
@@ -41,6 +42,7 @@
     <div class="news-filters-panel">
         <form method="get" id="form-news-filters" class="news-filters-form">
             <h2 class="visually-hidden">Filtros de informativos</h2>
+            <input type="hidden" name="sort" value="{{ selected_sort }}">
             <label class="news-search-field" for="input-news-search">
                 <i data-lucide="search"></i>
                 <input
@@ -108,8 +110,27 @@
         </form>
     </div>
 
-    <div class="news-results-bar" id="news-results-status" role="status" aria-live="polite">
-        <span>{{ news_items|length }} informativo{{ news_items|length|pluralize }} encontrado{{ news_items|length|pluralize }}</span>
+    <div class="news-results-bar">
+        <span class="news-results-count" id="news-results-status" role="status" aria-live="polite">
+            {{ news_items|length }} informativo{{ news_items|length|pluralize }} encontrado{{ news_items|length|pluralize }}
+        </span>
+
+        <form method="get" id="form-news-sort" class="news-sort-form">
+            {% if selected_query %}<input type="hidden" name="q" value="{{ selected_query }}">{% endif %}
+            {% if selected_source %}<input type="hidden" name="source" value="{{ selected_source }}">{% endif %}
+            {% if selected_status != 'all' %}<input type="hidden" name="status" value="{{ selected_status }}">{% endif %}
+            {% if selected_relevance != 'all' %}<input type="hidden" name="relevance" value="{{ selected_relevance }}">{% endif %}
+            {% if selected_effective_date_from %}<input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">{% endif %}
+            {% if selected_effective_date_to %}<input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">{% endif %}
+            <label class="news-sort-field" for="select-news-sort">
+                <span>Ordenar por</span>
+                <select id="select-news-sort" name="sort" class="js-news-sort-select">
+                    {% for value, label in sort_options %}
+                        <option value="{{ value }}"{% if selected_sort == value %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </form>
     </div>
 
     {% if news_items %}
@@ -119,6 +140,7 @@
             <input type="hidden" name="source" value="{{ selected_source }}">
             <input type="hidden" name="status" value="{{ selected_status }}">
             <input type="hidden" name="relevance" value="{{ selected_relevance }}">
+            <input type="hidden" name="sort" value="{{ selected_sort }}">
             <input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">
             <input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">
             <div class="news-bulk-bar" id="div-news-bulk-bar" hidden>
@@ -244,6 +266,7 @@
                             <input type="hidden" name="source" value="{{ selected_source }}">
                             <input type="hidden" name="status" value="{{ selected_status }}">
                             <input type="hidden" name="relevance" value="{{ selected_relevance }}">
+                            <input type="hidden" name="sort" value="{{ selected_sort }}">
                             <input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">
                             <input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">
                             <button type="submit" class="news-read-button {% if item.is_read %}is-read{% endif %}">
@@ -259,6 +282,7 @@
                                 <input type="hidden" name="source" value="{{ selected_source }}">
                                 <input type="hidden" name="status" value="{{ selected_status }}">
                                 <input type="hidden" name="relevance" value="{{ selected_relevance }}">
+                                <input type="hidden" name="sort" value="{{ selected_sort }}">
                                 <input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">
                                 <input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">
                                 <button
