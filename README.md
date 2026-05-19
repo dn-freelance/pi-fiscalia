@@ -154,3 +154,31 @@ Se você deseja contribuir com o projeto, siga os passos abaixo para criar uma n
    ```
 
 5. Acesse o repositório no GitHub e abra um **Pull Request** da sua branch para a branch principal, descrevendo detalhadamente as mudanças e o contexto da sua contribuição.
+
+## Como validar alterações e identificar regressões
+
+Depois de implementar uma mudança, rode os testes para verificar se houve regressão no comportamento existente.
+
+Para executar a suíte completa:
+
+```bash
+python manage.py test
+```
+
+Para rodar apenas um arquivo de testes:
+
+```bash
+python manage.py test feeds.tests.test_news
+```
+
+Para rodar um teste específico:
+
+```bash
+python manage.py test feeds.tests.test_news.NewsViewTests.test_refresh_news_skips_failed_item_without_interrupting_other_news
+```
+
+Se quiser uma saída mais detalhada durante a execução, use:
+
+```bash
+python manage.py test -v 2
+```
