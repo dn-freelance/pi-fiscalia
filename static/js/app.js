@@ -77,6 +77,55 @@
         messagesContainer.style.display = 'none';
     }
 
+    function setupAssistantWidget() {
+        var widget = document.querySelector('[data-assistant-widget]');
+        if (!widget) {
+            return;
+        }
+
+        var slides = Array.from(widget.querySelectorAll('[data-assistant-slide]'));
+        var triggers = Array.from(widget.querySelectorAll('[data-assistant-trigger]'));
+
+        if (!slides.length || !triggers.length) {
+            return;
+        }
+
+        function activateSlide(index) {
+            slides.forEach(function (slide, slideIndex) {
+                var isActive = slideIndex === index;
+                slide.hidden = !isActive;
+                slide.classList.toggle('is-active', isActive);
+            });
+
+            triggers.forEach(function (trigger, triggerIndex) {
+                var isActive = triggerIndex === index;
+                trigger.classList.toggle('active', isActive);
+                trigger.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+        }
+
+        triggers.forEach(function (trigger) {
+            trigger.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                activateSlide(Number(trigger.dataset.index || 0));
+            });
+        });
+
+        widget.addEventListener('click', function (event) {
+            if (event.target.closest('[data-assistant-trigger]')) {
+                return;
+            }
+
+            var activeSlide = widget.querySelector('.assistant-slide.is-active');
+            if (!activeSlide || !activeSlide.dataset.href) {
+                return;
+            }
+
+            window.location.href = activeSlide.dataset.href;
+        });
+    }
+
     document.addEventListener('click', function (event) {
         var opener = event.target.closest('[data-modal-open]');
         var closer = event.target.closest('[data-modal-close]');
@@ -95,6 +144,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         refreshIcons();
         convertMessagesToToasts();
+        setupAssistantWidget();
     });
 
     window.Fiscalia = {

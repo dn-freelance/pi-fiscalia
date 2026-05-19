@@ -39,28 +39,50 @@
     </nav>
 
     <div class="sidebar-widgets">
-        <div class="widget-card">
-            <h3>Assistência Fiscal</h3>
-            <p>Centralizamos as mudanças de NCM, ICMS e regras tributárias para facilitar o dia a dia do seu escritório.</p>
+        <div class="widget-card assistant-card" data-assistant-widget>
+            {% for slide in sidebar_assistant_slides %}
+                <div
+                    class="assistant-slide{% if forloop.first %} is-active{% endif %}"
+                    data-assistant-slide
+                    data-href="{{ slide.href }}"
+                    {% if not forloop.first %}hidden{% endif %}
+                >
+                    <h3>{{ slide.title }}</h3>
+                    <p>{{ slide.description }}</p>
+                </div>
+            {% endfor %}
+
             <hr>
-            <div class="widget-footer">
-                <span class="version-text">VERSÃO 2.4.0</span>
-                <div class="pagination" aria-hidden="true">
-                    <span class="page active">1</span>
-                    <span class="page">2</span>
-                    <span class="page">3</span>
+            <div class="widget-footer assistant-widget-footer">
+                <span class="version-text">VERSÃO {{ sidebar_app_version }}</span>
+                <div class="pagination" role="tablist" aria-label="Seções da assistência fiscal">
+                    {% for slide in sidebar_assistant_slides %}
+                        <button
+                            type="button"
+                            class="page{% if forloop.first %} active{% endif %}"
+                            data-assistant-trigger
+                            data-index="{{ forloop.counter0 }}"
+                            aria-label="Exibir {{ slide.title }}"
+                            aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                        >
+                            {{ forloop.counter }}
+                        </button>
+                    {% endfor %}
                 </div>
             </div>
         </div>
 
-        <div class="widget-card status-card">
+        <a
+            href="{{ sidebar_network_status.href }}"
+            class="widget-card status-card status-card-{{ sidebar_network_status.tone }}"
+        >
             <div class="status-header">
                 <span class="status-label">STATUS DA REDE</span>
-                <span class="status-value">Estável</span>
+                <span class="status-value">{{ sidebar_network_status.label }}</span>
             </div>
             <div class="progress-bar-container">
-                <div class="progress-bar" style="width: 85%;"></div>
+                <div class="progress-bar progress-bar-{{ sidebar_network_status.tone }}" style="width: {{ sidebar_network_status.progress }}%;"></div>
             </div>
-        </div>
+        </a>
     </div>
 </aside>

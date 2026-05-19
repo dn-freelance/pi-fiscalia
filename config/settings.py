@@ -7,6 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(
     DEBUG=(bool, False),
+    APP_VERSION=(str, '2.4.0'),
     NEWS_AI_ENABLED=(bool, False),
     NEWS_AI_PROVIDER=(str, 'openai'),
     NEWS_AI_MODEL=(str, 'gpt-4o-mini'),
@@ -68,6 +69,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'feeds.context_processors.sidebar_context',
             ],
         },
     },
@@ -131,6 +133,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+APP_VERSION = env('APP_VERSION')
 
 NEWS_AI = {
     'ENABLED': env('NEWS_AI_ENABLED'),

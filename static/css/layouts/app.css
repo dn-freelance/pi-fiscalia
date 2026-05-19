@@ -117,6 +117,12 @@
   padding: 20px;
 }
 
+.assistant-card,
+.status-card {
+  color: inherit;
+  text-decoration: none;
+}
+
 .widget-card h3 {
   color: var(--text-main);
   font-size: 14px;
@@ -135,6 +141,21 @@
   border: 0;
   border-top: 1px solid var(--border-color);
   margin-bottom: 16px;
+}
+
+.assistant-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.assistant-card:hover {
+  border-color: #cfd8e3;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.assistant-slide[hidden] {
+  display: none !important;
 }
 
 .widget-footer {
@@ -157,6 +178,7 @@
 .page {
   align-items: center;
   background-color: #f3f4f6;
+  border: 0;
   border-radius: 4px;
   color: var(--text-muted);
   cursor: pointer;
@@ -174,7 +196,30 @@
 }
 
 .status-card {
+  display: block;
   padding: 16px 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.status-card:hover {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.status-card-success .status-value {
+  color: #166534;
+}
+
+.status-card-info .status-value {
+  color: #1d4ed8;
+}
+
+.status-card-warning .status-value {
+  color: #b45309;
+}
+
+.status-card-danger .status-value {
+  color: #b91c1c;
 }
 
 .status-header {
@@ -207,6 +252,22 @@
   background-color: var(--success-color);
   border-radius: 3px;
   height: 100%;
+}
+
+.progress-bar-success {
+  background-color: var(--success-color);
+}
+
+.progress-bar-info {
+  background-color: #2563eb;
+}
+
+.progress-bar-warning {
+  background-color: #d97706;
+}
+
+.progress-bar-danger {
+  background-color: #dc2626;
 }
 
 .main-content {
