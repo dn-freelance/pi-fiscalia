@@ -187,7 +187,7 @@ def toggle_news_follow(request, news_id):
             return JsonResponse(
                 {
                     'ok': False,
-                    'message': 'Esse informativo ainda nÃ£o tem uma data de vigÃªncia para acompanhamento.',
+                    'message': 'Esse informativo ainda não tem uma data de vigência para acompanhamento.',
                 },
                 status=400,
             )
@@ -198,7 +198,7 @@ def toggle_news_follow(request, news_id):
                 {
                     'ok': True,
                     'is_following': True,
-                    'message': 'Acompanhamento da vigÃªncia ativado para este informativo.',
+                    'message': 'Acompanhamento da vigência ativado para este informativo.',
                 }
             )
 
@@ -208,12 +208,12 @@ def toggle_news_follow(request, news_id):
             {
                 'ok': True,
                 'is_following': False,
-                'message': 'Acompanhamento da vigÃªncia desativado para este informativo.',
+                'message': 'Acompanhamento da vigência desativado para este informativo.',
             }
         )
 
     if analysis is None or analysis.effective_date is None:
-        message = 'Esse informativo ainda nÃ£o tem uma data de vigÃªncia para acompanhamento.'
+        message = 'Esse informativo ainda não tem uma data de vigência para acompanhamento.'
         if is_ajax:
             return JsonResponse({'ok': False, 'message': message}, status=400)
         messages.error(request, 'Esse informativo ainda não tem uma data de vigência para acompanhamento.')

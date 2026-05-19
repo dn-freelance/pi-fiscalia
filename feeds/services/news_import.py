@@ -84,7 +84,7 @@ class NewsImportResult:
         if not self.warnings:
             return ''
 
-        return f'{self.skipped_count} notÃ­cia(s) ignorada(s): ' + '; '.join(self.warnings)
+        return f'{self.skipped_count} notícia(s) ignorada(s): ' + '; '.join(self.warnings)
 
 
     def analysis_warning_messages(self):
@@ -472,11 +472,11 @@ def _run_news_analysis_batch(news_items, analysis_service, result, progress_call
     )
 
     for news_item, error_message in execution_result.failure_details:
-        logger.warning('IA nÃ£o conseguiu analisar o informativo %s: %s', news_item.link, error_message)
+        logger.warning('IA não conseguiu analisar o informativo %s: %s', news_item.link, error_message)
         _register_analysis_warning(result, news_item.source, news_item, error_message)
 
     if execution_result.halted:
-        logger.warning('IA foi interrompida durante a atualizaÃ§Ã£o dos informativos: %s', execution_result.halt_reason)
+        logger.warning('IA foi interrompida durante a atualização dos informativos: %s', execution_result.halt_reason)
         result.analysis_halted = True
         result.analysis_halt_reason = execution_result.halt_reason
         result.analysis_skipped_count += execution_result.halted_pending_count
@@ -494,7 +494,7 @@ def _wrap_analysis_progress(progress_callback):
 def _finalize_source_processing(result, source, imported_count, skipped_count, feed=None):
     if imported_count == 0:
         if skipped_count:
-            _register_error(result, source, 'nenhum item pÃ´de ser importado com seguranÃ§a')
+            _register_error(result, source, 'nenhum item pôde ser importado com segurança')
             return
 
         _register_error(result, source, _describe_unimportable_feed(feed))
@@ -506,9 +506,9 @@ def _finalize_source_processing(result, source, imported_count, skipped_count, f
 
 def _describe_unimportable_feed(feed):
     if getattr(feed, 'bozo', False):
-        return 'o feed retornou um formato invÃ¡lido ou incompatÃ­vel'
+        return 'o feed retornou um formato inválido ou incompatível'
 
-    return 'nenhum item importÃ¡vel foi encontrado na fonte'
+    return 'nenhum item importável foi encontrado na fonte'
 
 
 def _entry_content_value(entry):

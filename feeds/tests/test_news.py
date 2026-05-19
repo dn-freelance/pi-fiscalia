@@ -714,7 +714,7 @@ class NewsViewTests(TestCase):
         )
         item = NewsItem.objects.create(
             source=source,
-            title='NotÃ­cia com vigÃªncia via ajax',
+            title='Notícia com vigência via ajax',
             summary='Resumo curto.',
             link='https://example.com/follow-ajax-news',
             external_id='follow-ajax-1',
@@ -737,7 +737,7 @@ class NewsViewTests(TestCase):
             {
                 'ok': True,
                 'is_following': True,
-                'message': 'Acompanhamento da vigÃªncia ativado para este informativo.',
+                'message': 'Acompanhamento da vigência ativado para este informativo.',
             },
         )
         self.assertTrue(NewsItemFollow.objects.filter(news_item=item).exists())
@@ -753,7 +753,7 @@ class NewsViewTests(TestCase):
             {
                 'ok': True,
                 'is_following': False,
-                'message': 'Acompanhamento da vigÃªncia desativado para este informativo.',
+                'message': 'Acompanhamento da vigência desativado para este informativo.',
             },
         )
         self.assertFalse(NewsItemFollow.objects.filter(news_item=item).exists())

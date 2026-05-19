@@ -125,7 +125,7 @@
                     .catch(function (errorPayload) {
                         if (window.Fiscalia && typeof window.Fiscalia.showToast === 'function') {
                             window.Fiscalia.showToast(
-                                (errorPayload && errorPayload.message) || 'NÃ£o foi possÃ­vel atualizar o acompanhamento agora.',
+                                (errorPayload && errorPayload.message) || 'Não foi possível atualizar o acompanhamento agora.',
                                 'error'
                             );
                         }

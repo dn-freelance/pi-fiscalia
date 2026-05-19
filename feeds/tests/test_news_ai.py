@@ -134,13 +134,13 @@ class NewsAnalysisTests(TestCase):
                 'feeds.services.news_analysis.requests.post',
                 return_value=DummyJsonResponse(
                     build_openai_analysis_payload(
-                        summary='STF declara inconstitucional ICMS sobre SaaS. Estados tÃªm 180 dias para adequaÃ§Ã£o.',
+                        summary='STF declara inconstitucional ICMS sobre SaaS. Estados têm 180 dias para adequação.',
                         impact_level='high',
                         impact_context='Muito alto para empresas de software.',
-                        keywords=['ICMS', 'SaaS', 'JurisprudÃªncia'],
+                        keywords=['ICMS', 'SaaS', 'Jurisprudência'],
                         importance_score=93,
                         effective_date='2026-09-08',
-                        effective_date_label='180 dias apÃ³s publicaÃ§Ã£o',
+                        effective_date_label='180 dias após publicação',
                     )
                 ),
             ),
@@ -151,14 +151,14 @@ class NewsAnalysisTests(TestCase):
         self.assertEqual(analysis.status, NewsItemAnalysis.STATUS_COMPLETED)
         self.assertEqual(
             analysis.summary,
-            'STF declara inconstitucional ICMS sobre SaaS. Estados tÃªm 180 dias para adequaÃ§Ã£o.',
+            'STF declara inconstitucional ICMS sobre SaaS. Estados têm 180 dias para adequação.',
         )
         self.assertEqual(analysis.impact_level, NewsItemAnalysis.IMPACT_HIGH)
         self.assertEqual(analysis.impact_context, 'Muito alto para empresas de software.')
-        self.assertEqual(analysis.keywords, ['ICMS', 'SaaS', 'JurisprudÃªncia'])
+        self.assertEqual(analysis.keywords, ['ICMS', 'SaaS', 'Jurisprudência'])
         self.assertEqual(analysis.importance_score, 93)
-        self.assertEqual(analysis.effective_date_label, '180 dias apÃ³s publicaÃ§Ã£o')
-        self.assertEqual(analysis.effective_date_display, '08/09/2026 • 180 dias apÃ³s publicaÃ§Ã£o')
+        self.assertEqual(analysis.effective_date_label, '180 dias após publicação')
+        self.assertEqual(analysis.effective_date_display, '08/09/2026 • 180 dias após publicação')
 
         self.assertContains(response, 'Muito alto para empresas de software.')
         self.assertContains(response, 'ICMS')
@@ -214,7 +214,7 @@ class NewsAnalysisTests(TestCase):
         self.assertNotIn('news-ai-summary', rendered_html)
         self.assertNotIn('news-impact-box', rendered_html)
         self.assertNotIn('news-keywords-list', rendered_html)
-        self.assertNotIn('VigÃªncia:', rendered_html)
+        self.assertNotIn('Vigência:', rendered_html)
         self.assertNotIn('Score:', rendered_html)
 
     def test_refresh_news_uses_default_impact_context_when_only_level_is_inferred(self):
@@ -325,14 +325,14 @@ class NewsAnalysisTests(TestCase):
         self._create_source()
         feed_response = DummyResponse(build_feed([
             {
-                'title': 'NotÃ­cia em lote 1',
+                'title': 'Notícia em lote 1',
                 'link': 'https://example.com/noticias/lote-1',
                 'guid': 'ai-batch-1',
                 'published_at': 'Tue, 12 May 2026 12:30:00 GMT',
                 'summary': 'Resumo do lote 1.',
             },
             {
-                'title': 'NotÃ­cia em lote 2',
+                'title': 'Notícia em lote 2',
                 'link': 'https://example.com/noticias/lote-2',
                 'guid': 'ai-batch-2',
                 'published_at': 'Tue, 12 May 2026 13:30:00 GMT',
@@ -362,14 +362,14 @@ class NewsAnalysisTests(TestCase):
         self._create_source()
         feed_response = DummyResponse(build_feed([
             {
-                'title': 'NotÃ­cia 1',
+                'title': 'Notícia 1',
                 'link': 'https://example.com/noticias/1',
                 'guid': 'ai-rate-1',
                 'published_at': 'Tue, 12 May 2026 12:30:00 GMT',
                 'summary': 'Resumo 1.',
             },
             {
-                'title': 'NotÃ­cia 2',
+                'title': 'Notícia 2',
                 'link': 'https://example.com/noticias/2',
                 'guid': 'ai-rate-2',
                 'published_at': 'Tue, 12 May 2026 13:30:00 GMT',
@@ -395,7 +395,7 @@ class NewsAnalysisTests(TestCase):
         self.assertEqual(mocked_post.call_count, 1)
         self.assertContains(
             response,
-            'a API da OpenAI bloqueou temporariamente novas analises por limite de requisicoes ou tokens.',
+            'a API da OpenAI bloqueou temporariamente novas análises por limite de requisições ou tokens.',
         )
         self.assertContains(response, '2 notícia(s) foram importadas sem análise.')
         self.assertContains(response, '60 segundo(s)')
@@ -457,7 +457,7 @@ class NewsAnalysisTests(TestCase):
         source = self._create_source()
         news_item = NewsItem.objects.create(
             source=source,
-            title='AtualizaÃ§Ã£o relevante de ICMS',
+            title='Atualização relevante de ICMS',
             summary='Resumo do RSS.',
             link='https://example.com/noticias/atualizacao-icms',
             external_id='backfill-1',

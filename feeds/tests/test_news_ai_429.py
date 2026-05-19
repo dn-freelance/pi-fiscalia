@@ -54,6 +54,6 @@ class NewsAnalysis429Tests(NewsAnalysisTests):
         self.assertEqual(NewsItem.objects.count(), 2)
         self.assertEqual(NewsItemAnalysis.objects.count(), 0)
         self.assertEqual(mocked_post.call_count, 1)
-        self.assertContains(response, 'a API da OpenAI recusou a analise por quota, credito ou orcamento insuficiente.')
-        self.assertContains(response, 'Usage, Limits e Billing da organizacao/projeto na plataforma.')
+        self.assertContains(response, 'a API da OpenAI recusou a análise por quota, crédito ou orçamento insuficiente.')
+        self.assertContains(response, 'Usage, Limits e Billing da organização/projeto na plataforma.')
         self.assertIsNone(NewsItem.objects.get(link='https://example.com/noticias/quota-2').analysis_or_none)

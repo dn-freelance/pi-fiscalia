@@ -588,7 +588,7 @@ def _collect_openai_response_text(payload):
         for content in item.get('content', []):
             if content.get('type') == 'refusal':
                 refusal_text = _clean_text(content.get('refusal', ''))
-                raise NewsAnalysisProviderError(refusal_text or 'o provider recusou a anÃ¡lise.')
+                raise NewsAnalysisProviderError(refusal_text or 'o provider recusou a análise.')
 
             text_value = content.get('text', '')
             if isinstance(text_value, str) and text_value:
@@ -954,8 +954,8 @@ def _is_openai_quota_error(error_type, error_code, error_message):
 def _build_openai_quota_message(error_message):
     provider_detail = _clean_text(error_message)
     base_message = (
-        'a API da OpenAI recusou a analise por quota, credito ou orcamento insuficiente. '
-        'Verifique Usage, Limits e Billing da organizacao/projeto na plataforma.'
+        'a API da OpenAI recusou a análise por quota, crédito ou orçamento insuficiente. '
+        'Verifique Usage, Limits e Billing da organização/projeto na plataforma.'
     )
     if not provider_detail:
         return base_message
@@ -965,7 +965,7 @@ def _build_openai_quota_message(error_message):
 
 def _build_openai_rate_limit_message(error_message):
     provider_detail = _clean_text(error_message)
-    base_message = 'a API da OpenAI bloqueou temporariamente novas analises por limite de requisicoes ou tokens.'
+    base_message = 'a API da OpenAI bloqueou temporariamente novas análises por limite de requisições ou tokens.'
     if not provider_detail:
         return base_message
 
