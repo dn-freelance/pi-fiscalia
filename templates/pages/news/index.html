@@ -40,6 +40,7 @@
 
     <div class="news-filters-panel">
         <form method="get" id="form-news-filters" class="news-filters-form">
+            <h2 class="visually-hidden">Filtros de informativos</h2>
             <label class="news-search-field" for="input-news-search">
                 <i data-lucide="search"></i>
                 <input
@@ -48,6 +49,7 @@
                     type="search"
                     value="{{ selected_query }}"
                     placeholder="Pesquisar informativos..."
+                    aria-describedby="news-results-status"
                 >
             </label>
 
@@ -106,7 +108,7 @@
         </form>
     </div>
 
-    <div class="news-results-bar">
+    <div class="news-results-bar" id="news-results-status" role="status" aria-live="polite">
         <span>{{ news_items|length }} informativo{{ news_items|length|pluralize }} encontrado{{ news_items|length|pluralize }}</span>
     </div>
 
@@ -141,12 +143,12 @@
         </form>
 
         <label class="news-select-all-row" for="input-news-select-all">
-            <input type="checkbox" id="input-news-select-all">
+            <input type="checkbox" id="input-news-select-all" aria-controls="news-list">
             <span>Selecionar todos ({{ news_items|length }})</span>
         </label>
     {% endif %}
 
-    <div class="news-list">
+    <div class="news-list" id="news-list">
         {% for item in news_items %}
             <article class="news-card {% if not item.is_read %}is-unread{% endif %}" id="article-news-card-{{ item.id }}">
                 {% with analysis=item.analysis_or_none %}
@@ -252,6 +254,7 @@
                     <a href="{{ item.link }}" target="_blank" rel="noreferrer" class="news-original-link">
                         <i data-lucide="external-link"></i>
                         <span>Ver original</span>
+                        <span class="visually-hidden"> em nova aba</span>
                     </a>
                 </div>
                 {% endwith %}

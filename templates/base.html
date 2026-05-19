@@ -13,12 +13,26 @@
     {% block styles %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
+    <a class="skip-link" href="#main-content">Pular para o conteudo principal</a>
+    <div class="sidebar-backdrop" data-sidebar-backdrop hidden></div>
+
     <div class="app-container">
         {% include 'layouts/sidebar.html' %}
 
-        <main class="main-content">
+        <main class="main-content" id="main-content" tabindex="-1">
             <header class="top-header">
                 <div class="header-left">
+                    <button
+                        type="button"
+                        class="sidebar-toggle"
+                        data-sidebar-toggle
+                        aria-controls="app-sidebar"
+                        aria-expanded="false"
+                        aria-label="Abrir menu principal"
+                    >
+                        <i data-lucide="menu"></i>
+                        <span class="visually-hidden">Abrir menu principal</span>
+                    </button>
                     <span class="status-dot"></span>
                     <span class="header-title">{% block header_title %}Sistemas Operacionais{% endblock %}</span>
                     {% block header_badge %}<span class="badge-new">7 novas</span>{% endblock %}

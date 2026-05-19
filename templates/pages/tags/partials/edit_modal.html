@@ -1,7 +1,14 @@
-<div class="modal-overlay" id="div-tag-edit-modal" style="display: none;">
-    <div class="modal-box">
+<div
+    class="modal-overlay"
+    id="div-tag-edit-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="heading-tag-edit-modal"
+    hidden
+>
+    <div class="modal-box" tabindex="-1">
         <div class="modal-header">
-            <h2>Editar Tag</h2>
+            <h2 id="heading-tag-edit-modal">Editar Tag</h2>
             <button type="button" class="close-btn" aria-label="Fechar modal" data-modal-close="div-tag-edit-modal">&times;</button>
         </div>
 
@@ -9,18 +16,27 @@
             {% csrf_token %}
             <div class="form-group">
                 <label for="input-tag-edit-name">Nome da Tag</label>
-                <input id="input-tag-edit-name" name="name" type="text" placeholder="Ex: ICMS, NCM, Simples Nacional" required pattern="^[A-Za-zÀ-ÿ0-9\s\-/&()]+$" title="Use letras, números, espaços e os símbolos / - & ()">
+                <input id="input-tag-edit-name" name="name" type="text" placeholder="Ex: ICMS, NCM, Simples Nacional" required pattern="^[A-Za-zÃ€-Ã¿0-9\s\-/&()]+$" title="Use letras, numeros, espacos e os simbolos / - &amp; ()">
             </div>
 
-            <div class="form-group">
-                <label>Cor</label>
-                <div class="tag-color-picker" data-color-field="input-tag-edit-color">
+            <fieldset class="form-group form-fieldset">
+                <legend id="legend-tag-edit-color">Cor</legend>
+                <div class="tag-color-picker" data-color-field="input-tag-edit-color" role="radiogroup" aria-labelledby="legend-tag-edit-color">
                     {% for key, label in tag_color_choices %}
-                        <button type="button" class="tag-color-button tag-color-button-{{ key }}" data-color="{{ key }}">{{ label }}</button>
+                        <button
+                            type="button"
+                            class="tag-color-button tag-color-button-{{ key }}"
+                            data-color="{{ key }}"
+                            role="radio"
+                            aria-checked="false"
+                            tabindex="-1"
+                        >
+                            {{ label }}
+                        </button>
                     {% endfor %}
                 </div>
                 <input id="input-tag-edit-color" name="color" type="hidden" value="blue">
-            </div>
+            </fieldset>
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-modal-close="div-tag-edit-modal">Cancelar</button>

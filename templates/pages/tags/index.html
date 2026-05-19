@@ -14,7 +14,7 @@
             <p class="tags-subtitle">Crie e organize tags para categorizar informativos fiscais</p>
         </div>
 
-        <button type="button" class="btn-source-primary" title="Adicionar nova tag" data-modal-open="div-tag-create-modal">
+        <button type="button" class="btn-source-primary" title="Adicionar nova tag" data-modal-open="div-tag-create-modal" aria-haspopup="dialog" aria-controls="div-tag-create-modal">
             <i data-lucide="plus"></i>
             <span>Nova Tag</span>
         </button>
@@ -40,6 +40,8 @@
                         class="source-icon-button js-open-edit-tag"
                         title="Editar tag"
                         aria-label="Editar {{ tag.name }}"
+                        aria-haspopup="dialog"
+                        aria-controls="div-tag-edit-modal"
                         data-tag-update-url="{% url 'feeds:update_tag' tag.id %}"
                         data-tag-name="{{ tag.name }}"
                         data-tag-color="{{ tag.color }}"
@@ -52,6 +54,8 @@
                         class="source-icon-button danger js-open-delete-tag"
                         title="Excluir tag"
                         aria-label="Excluir {{ tag.name }}"
+                        aria-haspopup="dialog"
+                        aria-controls="div-tag-delete-modal"
                         data-tag-delete-url="{% url 'feeds:delete_tag' tag.id %}"
                         data-tag-name="{{ tag.name }}"
                     >

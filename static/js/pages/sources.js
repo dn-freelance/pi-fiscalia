@@ -13,7 +13,7 @@
                 form.elements.url.value = button.dataset.sourceUrl || '';
                 form.elements.description.value = button.dataset.sourceDescription || '';
                 form.elements.category.value = button.dataset.sourceCategory || 'Federal';
-                window.Fiscalia.showModal('div-source-edit-modal');
+                window.Fiscalia.showModal('div-source-edit-modal', button);
             });
         });
 
@@ -27,12 +27,13 @@
 
                 form.action = button.dataset.sourceDeleteUrl;
                 form.elements.name.value = button.dataset.sourceName || '';
-                window.Fiscalia.showModal('div-source-delete-modal');
+                window.Fiscalia.showModal('div-source-delete-modal', button);
             });
         });
 
         document.querySelectorAll('.js-source-status-input').forEach(function (input) {
             input.addEventListener('change', function () {
+                input.setAttribute('aria-checked', input.checked ? 'true' : 'false');
                 input.form.submit();
             });
         });

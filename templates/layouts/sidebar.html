@@ -1,36 +1,55 @@
-<aside class="sidebar">
+<aside class="sidebar" id="app-sidebar" aria-label="Menu principal">
     <div class="sidebar-header">
         <div class="logo-icon">
             <i data-lucide="bell"></i>
         </div>
         <div class="logo-text">
             <span class="logo-title">Fiscalia</span>
-            <span class="logo-subtitle">MONITORAMENTO TRIBUTÁRIO</span>
+            <span class="logo-subtitle">MONITORAMENTO TRIBUTARIO</span>
         </div>
+        <button type="button" class="sidebar-close" data-sidebar-close aria-label="Fechar menu principal">
+            <i data-lucide="x"></i>
+        </button>
     </div>
 
-    <nav class="sidebar-nav" aria-label="Navegação principal">
+    <nav class="sidebar-nav" aria-label="Navegacao principal">
         <ul>
             <li>
-                <a href="{% url 'feeds:index' %}" class="nav-item {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                <a
+                    href="{% url 'feeds:index' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'index' %}active{% endif %}"
+                    {% if request.resolver_match.url_name == 'index' %}aria-current="page"{% endif %}
+                >
                     <i data-lucide="bar-chart-2"></i>
                     Dashboard
                 </a>
             </li>
             <li>
-                <a href="{% url 'feeds:news' %}" class="nav-item {% if request.resolver_match.url_name == 'news' %}active{% endif %}">
+                <a
+                    href="{% url 'feeds:news' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'news' %}active{% endif %}"
+                    {% if request.resolver_match.url_name == 'news' %}aria-current="page"{% endif %}
+                >
                     <i data-lucide="layout-grid"></i>
                     Informativos Fiscais
                 </a>
             </li>
             <li>
-                <a href="{% url 'feeds:tags' %}" class="nav-item {% if request.resolver_match.url_name == 'tags' %}active{% endif %}">
+                <a
+                    href="{% url 'feeds:tags' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'tags' %}active{% endif %}"
+                    {% if request.resolver_match.url_name == 'tags' %}aria-current="page"{% endif %}
+                >
                     <i data-lucide="tags"></i>
                     Gerenciar Tags
                 </a>
             </li>
             <li>
-                <a href="{% url 'feeds:sources' %}" class="nav-item {% if request.resolver_match.url_name == 'sources' %}active{% endif %}">
+                <a
+                    href="{% url 'feeds:sources' %}"
+                    class="nav-item {% if request.resolver_match.url_name == 'sources' %}active{% endif %}"
+                    {% if request.resolver_match.url_name == 'sources' %}aria-current="page"{% endif %}
+                >
                     <i data-lucide="settings"></i>
                     Configurar Fontes
                 </a>
@@ -43,8 +62,11 @@
             {% for slide in sidebar_assistant_slides %}
                 <div
                     class="assistant-slide{% if forloop.first %} is-active{% endif %}"
+                    id="assistant-slide-{{ forloop.counter0 }}"
                     data-assistant-slide
                     data-href="{{ slide.href }}"
+                    role="tabpanel"
+                    aria-labelledby="assistant-tab-{{ forloop.counter0 }}"
                     {% if not forloop.first %}hidden{% endif %}
                 >
                     <h3>{{ slide.title }}</h3>
@@ -54,16 +76,23 @@
 
             <hr>
             <div class="widget-footer assistant-widget-footer">
-                <span class="version-text">VERSÃO {{ sidebar_app_version }}</span>
-                <div class="pagination" role="tablist" aria-label="Seções da assistência fiscal">
+                <span class="version-text">VERSAO {{ sidebar_app_version }}</span>
+                <a href="{{ sidebar_assistant_slides.0.href }}" class="assistant-cta" data-assistant-link>
+                    Abrir destaque
+                </a>
+                <div class="pagination" role="tablist" aria-label="Secoes da assistencia fiscal">
                     {% for slide in sidebar_assistant_slides %}
                         <button
                             type="button"
+                            id="assistant-tab-{{ forloop.counter0 }}"
                             class="page{% if forloop.first %} active{% endif %}"
                             data-assistant-trigger
                             data-index="{{ forloop.counter0 }}"
+                            role="tab"
+                            aria-controls="assistant-slide-{{ forloop.counter0 }}"
                             aria-label="Exibir {{ slide.title }}"
                             aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"
+                            tabindex="{% if forloop.first %}0{% else %}-1{% endif %}"
                         >
                             {{ forloop.counter }}
                         </button>

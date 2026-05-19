@@ -1,5 +1,14 @@
 (function () {
-    function selectColor(button, picker) {
+    function updatePickerState(picker, selectedColor) {
+        picker.querySelectorAll('.tag-color-button').forEach(function (item) {
+            var isSelected = item.dataset.color === selectedColor;
+            item.classList.toggle('is-selected', isSelected);
+            item.setAttribute('aria-checked', isSelected ? 'true' : 'false');
+            item.setAttribute('tabindex', isSelected ? '0' : '-1');
+        });
+    }
+
+    function selectColor(button, picker, shouldFocus) {
         var colorFieldId = picker.dataset.colorField;
         var colorField = document.getElementById(colorFieldId);
 
@@ -7,12 +16,12 @@
             return;
         }
 
-        picker.querySelectorAll('.tag-color-button').forEach(function (item) {
-            item.classList.remove('is-selected');
-        });
-
-        button.classList.add('is-selected');
         colorField.value = button.dataset.color || '';
+        updatePickerState(picker, colorField.value);
+
+        if (shouldFocus) {
+            button.focus();
+        }
     }
 
     function bindColorPicker(formId) {
@@ -30,9 +39,34 @@
 
         picker.querySelectorAll('.tag-color-button').forEach(function (button) {
             button.addEventListener('click', function () {
-                selectColor(button, picker);
+                selectColor(button, picker, false);
+            });
+
+            button.addEventListener('keydown', function (event) {
+                var buttons = Array.from(picker.querySelectorAll('.tag-color-button'));
+                var currentIndex = buttons.indexOf(button);
+                var nextIndex = null;
+
+                if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+                    nextIndex = (currentIndex + 1) % buttons.length;
+                } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+                    nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+                } else if (event.key === 'Home') {
+                    nextIndex = 0;
+                } else if (event.key === 'End') {
+                    nextIndex = buttons.length - 1;
+                }
+
+                if (nextIndex === null) {
+                    return;
+                }
+
+                event.preventDefault();
+                selectColor(buttons[nextIndex], picker, true);
             });
         });
+
+        updatePickerState(picker, form.querySelector('input[type="hidden"]').value);
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -54,12 +88,10 @@
 
                 var picker = form.querySelector('.tag-color-picker');
                 if (picker) {
-                    picker.querySelectorAll('.tag-color-button').forEach(function (item) {
-                        item.classList.toggle('is-selected', item.dataset.color === selectedColor);
-                    });
+                    updatePickerState(picker, selectedColor);
                 }
 
-                window.Fiscalia.showModal('div-tag-edit-modal');
+                window.Fiscalia.showModal('div-tag-edit-modal', button);
             });
         });
 
@@ -76,7 +108,7 @@
                 
                 // Save scroll position before showing modal
                 form.dataset.scrollY = window.scrollY;
-                window.Fiscalia.showModal('div-tag-delete-modal');
+                window.Fiscalia.showModal('div-tag-delete-modal', button);
             });
         });
 

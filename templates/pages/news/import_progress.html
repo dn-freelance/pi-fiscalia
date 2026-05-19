@@ -21,7 +21,7 @@
                 {{ job_payload.stage_message|default:"Estamos reunindo as notícias e preparando a análise com IA." }}
             </p>
 
-            <div class="news-progress-status-pill" id="div-news-progress-pill">
+            <div class="news-progress-status-pill" id="div-news-progress-pill" role="status" aria-live="polite">
                 <span class="news-progress-status-dot"></span>
                 <span id="span-news-progress-pill-label">Conectando as etapas da atualização</span>
             </div>
@@ -50,7 +50,15 @@
                 O sistema visita cada fonte ativa, baixa os feeds RSS e organiza os informativos sem duplicar conteúdo.
             </p>
 
-            <div class="news-progress-bar-shell" aria-hidden="true">
+            <div
+                class="news-progress-bar-shell"
+                role="progressbar"
+                aria-label="Progresso da importacao das noticias"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+                id="bar-shell-news-progress-rss"
+            >
                 <div class="news-progress-bar-fill" id="bar-news-progress-rss"></div>
             </div>
 
@@ -87,7 +95,15 @@
                 Depois da importação, a IA calcula resumo, impacto, score, vigência e palavras-chave para cada notícia nova.
             </p>
 
-            <div class="news-progress-bar-shell" aria-hidden="true">
+            <div
+                class="news-progress-bar-shell"
+                role="progressbar"
+                aria-label="Progresso da analise das noticias com IA"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+                id="bar-shell-news-progress-analysis"
+            >
                 <div class="news-progress-bar-fill secondary" id="bar-news-progress-analysis"></div>
             </div>
 
@@ -109,7 +125,7 @@
     </div>
 
     <div class="news-progress-footer" id="div-news-progress-footer">
-        <p class="news-progress-footer-text" id="paragraph-news-progress-footer">
+        <p class="news-progress-footer-text" id="paragraph-news-progress-footer" aria-live="polite">
             Assim que tudo terminar, você volta automaticamente para a lista de informativos.
         </p>
         <a href="{{ job_finalize_url }}" class="news-progress-return-link" id="link-news-progress-return" hidden>

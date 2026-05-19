@@ -2,12 +2,19 @@
   margin-bottom: 15px;
 }
 
-.form-group label {
+.form-group label,
+.form-group legend {
   color: #555555;
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
   margin-bottom: 6px;
+}
+
+.form-fieldset {
+  border: 0;
+  min-width: 0;
+  padding: 0;
 }
 
 .form-group input,

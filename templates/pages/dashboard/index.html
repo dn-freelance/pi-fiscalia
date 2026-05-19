@@ -87,7 +87,7 @@
         >
             <h2>📊 Resumo Semanal</h2>
 
-            <div class="weekly-summary-feedback{% if not weekly_summary.is_loading %} is-hidden{% endif %}" data-weekly-summary-feedback>
+            <div class="weekly-summary-feedback{% if not weekly_summary.is_loading %} is-hidden{% endif %}" data-weekly-summary-feedback aria-live="polite">
                 <div class="weekly-summary-skeleton">
                     <span></span>
                     <span></span>
@@ -96,13 +96,13 @@
                 <p data-weekly-summary-message>{{ weekly_summary.message }}</p>
             </div>
 
-            <div class="weekly-summary-content{% if not weekly_summary.is_ready %} is-hidden{% endif %}" data-weekly-summary-content>
+            <div class="weekly-summary-content{% if not weekly_summary.is_ready %} is-hidden{% endif %}" data-weekly-summary-content aria-live="polite">
                 <p><strong>Esta semana:</strong> <span data-weekly-summary-overview>{{ weekly_summary.overview }}</span></p>
                 <p><strong>Principais mudanças:</strong> <span data-weekly-summary-main-changes>{{ weekly_summary.main_changes }}</span></p>
                 <p><strong>Atenção:</strong> <span data-weekly-summary-attention>{{ weekly_summary.attention }}</span></p>
             </div>
 
-            <p class="weekly-summary-error{% if weekly_summary.status != 'failed' %} is-hidden{% endif %}" data-weekly-summary-error>
+            <p class="weekly-summary-error{% if weekly_summary.status != 'failed' %} is-hidden{% endif %}" data-weekly-summary-error aria-live="assertive">
                 {{ weekly_summary.error_message|default:weekly_summary.message }}
             </p>
         </article>

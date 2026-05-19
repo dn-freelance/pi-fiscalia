@@ -1,7 +1,7 @@
 .sources-page {
   margin: 0 auto;
   max-width: 72rem;
-  padding: 32px;
+  padding: clamp(20px, 3vw, 32px);
   width: 100%;
 }
 
@@ -127,6 +127,7 @@
 }
 
 .source-card-main {
+  flex: 1;
   min-width: 0;
 }
 
@@ -185,6 +186,7 @@
   text-decoration: none;
   width: fit-content;
   word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .source-url:hover {
@@ -196,6 +198,8 @@
   display: flex;
   flex-shrink: 0;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .source-toggle-form {
@@ -288,10 +292,6 @@
 }
 
 @media (max-width: 720px) {
-  .sources-page {
-    padding: 24px;
-  }
-
   .sources-title {
     font-size: 26px;
   }

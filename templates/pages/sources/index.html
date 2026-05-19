@@ -17,7 +17,7 @@
             </div>
         </div>
 
-        <button type="button" class="btn-source-primary" title="Adicionar nova fonte" data-modal-open="div-source-create-modal">
+        <button type="button" class="btn-source-primary" title="Adicionar nova fonte" data-modal-open="div-source-create-modal" aria-haspopup="dialog" aria-controls="div-source-create-modal">
             <i data-lucide="plus"></i>
             <span>Nova Fonte</span>
         </button>
@@ -56,6 +56,8 @@
                         class="source-icon-button js-open-edit-source"
                         title="Editar fonte"
                         aria-label="Editar {{ source.name }}"
+                        aria-haspopup="dialog"
+                        aria-controls="div-source-edit-modal"
                         data-source-update-url="{% url 'feeds:update_source' source.id %}"
                         data-source-name="{{ source.name }}"
                         data-source-url="{{ source.url }}"
@@ -70,6 +72,8 @@
                         class="source-icon-button danger js-open-delete-source"
                         title="Excluir fonte"
                         aria-label="Excluir {{ source.name }}"
+                        aria-haspopup="dialog"
+                        aria-controls="div-source-delete-modal"
                         data-source-delete-url="{% url 'feeds:delete_source' source.id %}"
                         data-source-name="{{ source.name }}"
                     >
@@ -80,7 +84,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="name" value="{{ source.name }}">
                         <label class="source-toggle" title="Ativar ou desativar fonte">
-                            <input type="checkbox" name="active" class="js-source-status-input" aria-label="Ativar ou desativar {{ source.name }}" {% if source.active %}checked{% endif %}>
+                            <input type="checkbox" name="active" class="js-source-status-input" role="switch" aria-checked="{% if source.active %}true{% else %}false{% endif %}" aria-label="Ativar ou desativar {{ source.name }}" {% if source.active %}checked{% endif %}>
                             <span></span>
                         </label>
                     </form>
@@ -90,7 +94,7 @@
             <div class="sources-empty-state">
                 <h2>Nenhuma fonte cadastrada</h2>
                 <p>Use o botão Nova Fonte para adicionar um feed RSS e começar a importar informativos fiscais por aqui.</p>
-                <button type="button" class="btn-source-primary" title="Adicionar nova fonte" data-modal-open="div-source-create-modal">
+                <button type="button" class="btn-source-primary" title="Adicionar nova fonte" data-modal-open="div-source-create-modal" aria-haspopup="dialog" aria-controls="div-source-create-modal">
                     <i data-lucide="plus"></i>
                     <span>Cadastrar primeira fonte</span>
                 </button>

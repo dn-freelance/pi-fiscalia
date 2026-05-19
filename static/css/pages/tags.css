@@ -1,7 +1,7 @@
 .tags-page {
   margin: 0 auto;
   max-width: 72rem;
-  padding: 32px;
+  padding: clamp(20px, 3vw, 32px);
   width: 100%;
 }
 
@@ -65,6 +65,7 @@
   box-shadow: 0 12px 26px rgba(17, 24, 39, 0.04);
   display: flex;
   justify-content: space-between;
+  overflow-wrap: anywhere;
   padding: 18px;
   min-height: 86px;
 }
@@ -248,10 +249,6 @@
 }
 
 @media (max-width: 720px) {
-  .tags-page {
-    padding: 24px;
-  }
-
   .tags-title {
     font-size: 26px;
   }

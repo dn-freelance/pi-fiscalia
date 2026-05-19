@@ -5,7 +5,7 @@
 .dashboard-shell {
   margin: 0 auto;
   max-width: 72rem;
-  padding: 32px;
+  padding: clamp(20px, 3vw, 32px);
 }
 
 .dashboard-intro {
@@ -143,6 +143,11 @@
 
 .dashboard-card {
   padding: 24px;
+}
+
+.dashboard-card,
+.metric-card {
+  overflow-wrap: anywhere;
 }
 
 .dashboard-highlight-card {
@@ -400,10 +405,6 @@
 }
 
 @media (max-width: 720px) {
-  .dashboard-shell {
-    padding: 24px;
-  }
-
   .dashboard-intro h1 {
     font-size: 26px;
   }

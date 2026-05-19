@@ -8,8 +8,14 @@
 
     function setWidth(id, percent) {
         var element = document.getElementById(id);
+        var shell = document.getElementById('bar-shell-' + id.replace('bar-', ''));
+        var boundedPercent = Math.max(0, Math.min(100, percent || 0));
         if (element) {
-            element.style.width = String(Math.max(0, Math.min(100, percent || 0))) + '%';
+            element.style.width = String(boundedPercent) + '%';
+        }
+
+        if (shell) {
+            shell.setAttribute('aria-valuenow', String(Math.round(boundedPercent)));
         }
     }
 

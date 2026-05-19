@@ -1,6 +1,7 @@
 .news-progress-page {
   margin: 0 auto;
   max-width: 1040px;
+  padding: clamp(20px, 3vw, 32px);
   width: 100%;
 }
 
@@ -239,6 +240,12 @@
   gap: 16px;
   justify-content: space-between;
   padding: 20px 6px 0;
+}
+
+.news-progress-page,
+.news-progress-card,
+.news-progress-metric {
+  overflow-wrap: anywhere;
 }
 
 .news-progress-footer-text {

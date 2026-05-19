@@ -4,3 +4,91 @@
 @import url("components/forms.css");
 @import url("components/messages.css");
 @import url("components/modal.css");
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+body.is-scroll-locked {
+  overflow: hidden;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  box-shadow: 0 0 0 4px var(--focus-ring-color);
+  outline: 2px solid var(--focus-ring-outline);
+  outline-offset: 2px;
+}
+
+.skip-link,
+.visually-hidden {
+  position: absolute;
+}
+
+.skip-link {
+  background-color: #111827;
+  border-radius: 10px;
+  color: #ffffff;
+  left: 16px;
+  padding: 12px 16px;
+  text-decoration: none;
+  top: 16px;
+  transform: translateY(-140%);
+  transition: transform 0.2s ease;
+  z-index: 80;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.visually-hidden {
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

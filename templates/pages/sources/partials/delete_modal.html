@@ -1,10 +1,19 @@
-<div class="modal-overlay" id="div-source-delete-modal" style="display: none;">
-    <div class="modal-box modal-box-sm">
+<div
+    class="modal-overlay"
+    id="div-source-delete-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="heading-source-delete-modal"
+    aria-describedby="paragraph-source-delete-modal"
+    hidden
+>
+    <div class="modal-box modal-box-sm" tabindex="-1">
         <div class="modal-header">
-            <h2>Confirmar exclusão</h2>
+            <h2 id="heading-source-delete-modal">Confirmar exclusao</h2>
+            <button type="button" class="close-btn" aria-label="Fechar modal" data-modal-close="div-source-delete-modal">&times;</button>
         </div>
 
-        <p class="modal-description">Tem certeza que deseja remover esta fonte? Esta ação não pode ser desfeita.</p>
+        <p class="modal-description" id="paragraph-source-delete-modal">Tem certeza que deseja remover esta fonte? Esta acao nao pode ser desfeita.</p>
 
         <form id="form-source-delete" method="post" action="">
             {% csrf_token %}

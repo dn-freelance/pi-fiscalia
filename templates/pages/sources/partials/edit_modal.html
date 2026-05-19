@@ -1,7 +1,14 @@
-<div class="modal-overlay" id="div-source-edit-modal" style="display: none;">
-    <div class="modal-box">
+<div
+    class="modal-overlay"
+    id="div-source-edit-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="heading-source-edit-modal"
+    hidden
+>
+    <div class="modal-box" tabindex="-1">
         <div class="modal-header">
-            <h2>Editar Fonte</h2>
+            <h2 id="heading-source-edit-modal">Editar Fonte</h2>
             <button type="button" class="close-btn" aria-label="Fechar modal" data-modal-close="div-source-edit-modal">&times;</button>
         </div>
 
@@ -18,8 +25,8 @@
             </div>
 
             <div class="form-group">
-                <label for="textarea-source-edit-description">Descrição</label>
-                <textarea id="textarea-source-edit-description" name="description" placeholder="Breve descrição do conteúdo"></textarea>
+                <label for="textarea-source-edit-description">Descricao</label>
+                <textarea id="textarea-source-edit-description" name="description" placeholder="Breve descricao do conteudo"></textarea>
             </div>
 
             <div class="form-group">
@@ -33,7 +40,7 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-modal-close="div-source-edit-modal">Cancelar</button>
-                <button type="submit" class="btn btn-success">Salvar Alterações</button>
+                <button type="submit" class="btn btn-success">Salvar Alteracoes</button>
             </div>
         </form>
     </div>
