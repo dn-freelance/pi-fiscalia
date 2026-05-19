@@ -48,6 +48,7 @@ class NewsAnalysis429Tests(NewsAnalysisTests):
                     status_code=429,
                 ),
             ) as mocked_post,
+            self.assertLogs('feeds.services.news_import', level='WARNING') as captured_logs,
         ):
             response = self.client.post(reverse('feeds:refresh_news'), follow=True)
 
@@ -57,3 +58,9 @@ class NewsAnalysis429Tests(NewsAnalysisTests):
         self.assertContains(response, 'a API da OpenAI recusou a análise por quota, crédito ou orçamento insuficiente.')
         self.assertContains(response, 'Usage, Limits e Billing da organização/projeto na plataforma.')
         self.assertIsNone(NewsItem.objects.get(link='https://example.com/noticias/quota-2').analysis_or_none)
+        self._assert_warning_contains(
+            captured_logs,
+            'IA foi interrompida durante a atualização dos informativos:',
+            'a API da OpenAI recusou a análise por quota, crédito ou orçamento insuficiente.',
+            'You exceeded your current quota, please check your plan and billing details.',
+        )

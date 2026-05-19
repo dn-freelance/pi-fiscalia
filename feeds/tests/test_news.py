@@ -411,13 +411,23 @@ class NewsViewTests(TestCase):
             return original_get_or_create(*args, **kwargs)
 
         with patch('feeds.services.news_import.requests.get', return_value=response_content):
-            with patch('feeds.services.news_import.NewsItem.objects.get_or_create', side_effect=flaky_get_or_create):
-                response = self.client.post(reverse('feeds:refresh_news'), follow=True)
+            with self.assertLogs('feeds.services.news_import', level='WARNING') as captured_logs:
+                with patch('feeds.services.news_import.NewsItem.objects.get_or_create', side_effect=flaky_get_or_create):
+                    response = self.client.post(reverse('feeds:refresh_news'), follow=True)
 
         self.assertEqual(NewsItem.objects.count(), 1)
         self.assertTrue(NewsItem.objects.filter(title='Notícia íntegra').exists())
         self.assertFalse(NewsItem.objects.filter(title='Notícia com falha').exists())
         self.assertContains(response, 'item(ns) ignorado(s) por dados incompletos ou erro no processamento')
+        self.assertTrue(
+            any(
+                'Item https://example.com/noticia-falha da fonte https://example.com/parcial/rss foi ignorado por erro ao persistir'
+                in message
+                and 'falha simulada ao persistir item' in message
+                for message in captured_logs.output
+            ),
+            captured_logs.output,
+        )
 
     def test_refresh_news_reports_error_when_no_item_can_be_imported_safely(self):
         Source.objects.create(
@@ -576,12 +586,17 @@ class NewsViewTests(TestCase):
             'feeds.services.news_import.requests.get',
             side_effect=[requests.RequestException('boom'), response_content],
         ):
-            response = self.client.post(reverse('feeds:refresh_news'), follow=True)
+            with self.assertLogs('feeds.services.news_import', level='WARNING') as captured_logs:
+                response = self.client.post(reverse('feeds:refresh_news'), follow=True)
 
         self.assertEqual(NewsItem.objects.count(), 1)
         self.assertEqual(NewsItem.objects.get().source, successful_source)
         self.assertContains(response, 'Atualização concluída: 1 nova(s) e 0 já existente(s).')
         self.assertContains(response, '1 fonte(s) com erro:')
+        self.assertTrue(
+            any('Erro ao atualizar feed https://example.com/error/rss: boom' in message for message in captured_logs.output),
+            captured_logs.output,
+        )
 
     def test_news_filters_by_query_source_and_status(self):
         source_a = Source.objects.create(
@@ -1335,11 +1350,21 @@ class NewsViewTests(TestCase):
             'feeds.services.news_import.requests.get',
             side_effect=lambda url, **kwargs: responses_by_url[url],
         ):
-            response = self.client.post(reverse('feeds:refresh_news'), follow=True)
+            with self.assertLogs('feeds.services.news_import', level='WARNING') as captured_logs:
+                response = self.client.post(reverse('feeds:refresh_news'), follow=True)
 
         self.assertContains(response, 'Atualização concluída: 2 nova(s) e 0 já existente(s).')
         self.assertNotContains(response, 'Receita Federal: falha ao buscar o feed RSS')
         self.assertEqual(NewsItem.objects.filter(source=source).count(), 2)
+        self.assertTrue(
+            any(
+                'Falha ao buscar feed RSS https://www.gov.br/receitafederal/pt-br/assuntos/noticias/RSS. '
+                'Tentando fallback direto pela listagem gov.br: HTTP 403'
+                in message
+                for message in captured_logs.output
+            ),
+            captured_logs.output,
+        )
 
     def test_refresh_news_removes_bad_structural_items_when_gov_br_fallback_runs(self):
         source = Source.objects.create(

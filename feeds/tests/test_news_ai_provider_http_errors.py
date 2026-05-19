@@ -24,6 +24,7 @@ class NewsAnalysisProviderHttpErrorTests(NewsAnalysisTests):
                 'feeds.services.news_analysis.requests.post',
                 return_value=DummyJsonResponse({}, status_code=404),
             ),
+            self.assertLogs('feeds.services.news_import', level='WARNING') as captured_logs,
         ):
             response = self.client.post(reverse('feeds:refresh_news'), follow=True)
 
@@ -33,3 +34,8 @@ class NewsAnalysisProviderHttpErrorTests(NewsAnalysisTests):
         self.assertIn('falha na consulta ao provider: HTTP 404', analysis.error_message)
         self.assertContains(response, 'Atualização concluída: 1 nova(s) e 0 já existente(s).')
         self.assertNotContains(response, 'Fonte IA: falha ao buscar o feed RSS')
+        self._assert_warning_contains(
+            captured_logs,
+            'IA não conseguiu analisar o informativo https://example.com/noticias/stf-icms-saas',
+            'falha na consulta ao provider: HTTP 404. HTTP 404',
+        )

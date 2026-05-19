@@ -110,6 +110,12 @@ class NewsAnalysisTests(TestCase):
 
         return responder
 
+    def _assert_warning_contains(self, captured_logs, *parts):
+        self.assertTrue(
+            any(all(part in message for part in parts) for message in captured_logs.output),
+            captured_logs.output,
+        )
+
     @override_settings(NEWS_AI=build_ai_settings(enabled=False))
     def test_refresh_news_with_ai_disabled_keeps_import_without_analysis(self):
         self._create_source()
@@ -271,6 +277,7 @@ class NewsAnalysisTests(TestCase):
                 side_effect=self._request_get_side_effect(feed_response, article_response),
             ),
             patch('feeds.services.news_analysis.requests.post', side_effect=requests.Timeout('timeout')),
+            self.assertLogs('feeds.services.news_import', level='WARNING') as captured_logs,
         ):
             self.client.post(reverse('feeds:refresh_news'), follow=True)
 
@@ -279,6 +286,11 @@ class NewsAnalysisTests(TestCase):
         self.assertEqual(imported_item.title, 'STF julga inconstitucional cobrança de ICMS sobre software em nuvem')
         self.assertEqual(analysis.status, NewsItemAnalysis.STATUS_FAILED)
         self.assertIn('falha na consulta ao provider', analysis.error_message)
+        self._assert_warning_contains(
+            captured_logs,
+            'IA não conseguiu analisar o informativo https://example.com/noticias/stf-icms-saas',
+            'falha na consulta ao provider: timeout',
+        )
 
     def test_refresh_news_preserves_previous_analysis_when_new_attempt_fails(self):
         self._create_source()
@@ -317,6 +329,7 @@ class NewsAnalysisTests(TestCase):
                 side_effect=self._request_get_side_effect(feed_response, article_response),
             ),
             patch('feeds.services.news_analysis.requests.post', side_effect=requests.Timeout('timeout')),
+            self.assertLogs('feeds.services.news_import', level='WARNING') as captured_logs,
         ):
             self.client.post(reverse('feeds:refresh_news'))
 
@@ -329,6 +342,11 @@ class NewsAnalysisTests(TestCase):
         self.assertEqual(analysis.importance_score, 87)
         self.assertEqual(analysis.effective_date_label, '01/08/2026')
         self.assertIn('falha na consulta ao provider', analysis.error_message)
+        self._assert_warning_contains(
+            captured_logs,
+            'IA não conseguiu analisar o informativo https://example.com/noticias/stf-icms-saas',
+            'falha na consulta ao provider: timeout',
+        )
 
     def test_refresh_news_batches_multiple_news_in_single_provider_call(self):
         self._create_source()
@@ -494,6 +512,7 @@ class NewsAnalysisTests(TestCase):
                 'feeds.services.news_analysis.requests.post',
                 return_value=DummyJsonResponse({}, status_code=429, headers={'Retry-After': '60'}),
             ) as mocked_post,
+            self.assertLogs('feeds.services.news_import', level='WARNING') as captured_logs,
         ):
             response = self.client.post(reverse('feeds:refresh_news'), follow=True)
 
@@ -507,6 +526,12 @@ class NewsAnalysisTests(TestCase):
         self.assertContains(response, '2 notícia(s) foram importadas sem análise.')
         self.assertContains(response, '60 segundo(s)')
         self.assertIsNone(NewsItem.objects.get(link='https://example.com/noticias/2').analysis_or_none)
+        self._assert_warning_contains(
+            captured_logs,
+            'IA foi interrompida durante a atualização dos informativos:',
+            'a API da OpenAI bloqueou temporariamente novas análises por limite de requisições ou tokens.',
+            '60 segundo(s)',
+        )
 
     def test_refresh_news_keeps_news_when_article_page_cannot_be_extracted(self):
         self._create_source()
@@ -522,6 +547,7 @@ class NewsAnalysisTests(TestCase):
                 side_effect=self._request_get_side_effect(feed_response, article_response),
             ),
             patch('feeds.services.news_analysis.requests.post') as mocked_post,
+            self.assertLogs('feeds.services.news_import', level='WARNING') as captured_logs,
         ):
             self.client.post(reverse('feeds:refresh_news'), follow=True)
 
@@ -530,6 +556,11 @@ class NewsAnalysisTests(TestCase):
         mocked_post.assert_not_called()
         self.assertEqual(analysis.status, NewsItemAnalysis.STATUS_FAILED)
         self.assertIn('não é uma página HTML suportada', analysis.error_message)
+        self._assert_warning_contains(
+            captured_logs,
+            'IA não conseguiu analisar o informativo https://example.com/noticias/stf-icms-saas',
+            'a matéria original não é uma página HTML suportada.',
+        )
 
     def test_refresh_news_skips_reprocessing_when_analysis_input_is_current(self):
         self._create_source()
