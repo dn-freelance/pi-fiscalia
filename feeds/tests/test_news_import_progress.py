@@ -15,6 +15,9 @@ class NewsImportProgressTests(TestCase):
     def setUpTestData(cls):
         cls.federal = SourceCategory.objects.get(name='Federal')
 
+    def setUp(self):
+        Source.objects.all().delete()
+
     def test_refresh_news_creates_job_and_redirects_to_progress_page(self):
         with patch('feeds.views.news.start_news_import_job') as mocked_start:
             response = self.client.post(

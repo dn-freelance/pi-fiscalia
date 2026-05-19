@@ -252,7 +252,31 @@
                             {% endif %}
 
                             {% if analysis.has_importance_score %}
-                                <span class="news-meta-item news-score-badge">Score: {{ analysis.importance_score }}</span>
+                                {% if analysis.has_tag_score_matches %}
+                                    <span class="news-score-tooltip-wrapper">
+                                        <span
+                                            class="news-meta-item news-score-badge news-score-badge-interactive"
+                                            tabindex="0"
+                                            title="{{ analysis.score_tooltip_text }}"
+                                            aria-describedby="news-score-tooltip-{{ item.id }}"
+                                        >
+                                            <span>Score: {{ analysis.importance_score }}</span>
+                                            <i data-lucide="info"></i>
+                                        </span>
+                                        <span class="news-score-tooltip" role="tooltip" id="news-score-tooltip-{{ item.id }}">
+                                            <strong>Tags que pesaram no score</strong>
+                                            {% for match in analysis.tag_score_matches_display %}
+                                                <span class="news-score-tooltip-row">
+                                                    <span class="news-score-tooltip-tag news-score-tooltip-tag-{{ match.color }}">{{ match.name }}</span>
+                                                    <span>{{ match.occurrences }}x • +{{ match.boost }}</span>
+                                                </span>
+                                            {% endfor %}
+                                            <span class="news-score-tooltip-total">Bônus total: +{{ analysis.tag_score_boost }}</span>
+                                        </span>
+                                    </span>
+                                {% else %}
+                                    <span class="news-meta-item news-score-badge">Score: {{ analysis.importance_score }}</span>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </div>

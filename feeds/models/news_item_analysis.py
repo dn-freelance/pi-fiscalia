@@ -37,7 +37,10 @@ class NewsItemAnalysis(models.Model):
     )
     impact_context = models.CharField('contexto do impacto', max_length=255, blank=True)
     keywords = models.JSONField('palavras-chave', default=list, blank=True)
+    base_importance_score = models.PositiveSmallIntegerField('score base da IA', null=True, blank=True)
     importance_score = models.PositiveSmallIntegerField('score de importância', null=True, blank=True)
+    tag_score_boost = models.PositiveSmallIntegerField('bônus por tags', default=0)
+    tag_score_matches = models.JSONField('detalhes do bônus por tags', default=list, blank=True)
     effective_date = models.DateField('data de vigência', null=True, blank=True)
     effective_date_label = models.CharField('rótulo da vigência', max_length=120, blank=True)
     status = models.CharField('status da análise', max_length=16, choices=STATUS_CHOICES, default=STATUS_FAILED)
@@ -105,3 +108,52 @@ class NewsItemAnalysis(models.Model):
     @property
     def has_effective_date_display(self):
         return bool(self.effective_date_display)
+
+    @property
+    def tag_score_matches_display(self):
+        matches = self.tag_score_matches if isinstance(self.tag_score_matches, list) else []
+        normalized_matches = []
+
+        for item in matches:
+            if not isinstance(item, dict):
+                continue
+
+            name = str(item.get('name', '')).strip()
+            color = str(item.get('color', '')).strip()
+
+            try:
+                occurrences = max(0, int(item.get('occurrences', 0)))
+                boost = max(0, int(item.get('boost', 0)))
+            except (TypeError, ValueError):
+                continue
+
+            if not name or occurrences <= 0 or boost <= 0:
+                continue
+
+            normalized_matches.append({
+                'name': name,
+                'color': color,
+                'occurrences': occurrences,
+                'boost': boost,
+            })
+
+        return normalized_matches
+
+    @property
+    def has_tag_score_matches(self):
+        return bool(self.tag_score_matches_display)
+
+    @property
+    def score_tooltip_text(self):
+        if not self.has_tag_score_matches:
+            return ''
+
+        details = ', '.join(
+            f'{match["name"]} ({match["occurrences"]}x, +{match["boost"]})'
+            for match in self.tag_score_matches_display
+        )
+
+        if self.tag_score_boost:
+            return f'Bônus total: +{self.tag_score_boost}. {details}'
+
+        return details

@@ -18,7 +18,7 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING('IA desabilitada. Nenhuma análise foi executada.'))
             return
 
-        queryset = NewsItem.objects.select_related('source', 'source__category', 'analysis').filter(
+        queryset = NewsItem.objects.select_related('source', 'source__category', 'analysis').prefetch_related('source__tags').filter(
             Q(analysis__isnull=True)
             | Q(analysis__status=NewsItemAnalysis.STATUS_FAILED)
             | ~Q(analysis__pipeline_version=settings.NEWS_AI['PIPELINE_VERSION'])

@@ -9,7 +9,7 @@ from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from feeds.models import NewsItem, NewsItemAnalysis, Source, SourceCategory
+from feeds.models import NewsItem, NewsItemAnalysis, Source, SourceCategory, Tag
 from feeds.tests.test_news import (
     DummyJsonResponse,
     DummyResponse,
@@ -28,6 +28,7 @@ class NewsAnalysisTests(TestCase):
 
     def setUp(self):
         self.client.defaults['HTTP_X_FISCALIA_SYNC_IMPORT'] = '1'
+        Source.objects.update(active=False)
 
     def _create_source(self, name='Fonte IA', url='https://example.com/ia/rss'):
         return Source.objects.create(
@@ -156,14 +157,21 @@ class NewsAnalysisTests(TestCase):
         self.assertEqual(analysis.impact_level, NewsItemAnalysis.IMPACT_HIGH)
         self.assertEqual(analysis.impact_context, 'Muito alto para empresas de software.')
         self.assertEqual(analysis.keywords, ['ICMS', 'SaaS', 'Jurisprudência'])
-        self.assertEqual(analysis.importance_score, 93)
+        self.assertEqual(analysis.base_importance_score, 93)
+        self.assertEqual(analysis.importance_score, 99)
+        self.assertEqual(analysis.tag_score_boost, 6)
+        self.assertEqual(
+            analysis.tag_score_matches,
+            [{'name': 'ICMS', 'color': 'green', 'occurrences': 2, 'boost': 6}],
+        )
         self.assertEqual(analysis.effective_date_label, '180 dias após publicação')
         self.assertEqual(analysis.effective_date_display, '08/09/2026 • 180 dias após publicação')
 
         self.assertContains(response, 'Muito alto para empresas de software.')
         self.assertContains(response, 'ICMS')
         self.assertContains(response, 'SaaS')
-        self.assertContains(response, 'Score: 93')
+        self.assertContains(response, 'Score: 99')
+        self.assertContains(response, 'Bônus total: +6')
 
         rendered_html = response.content.decode('utf-8')
         self.assertIn('news-ai-summary', rendered_html)
@@ -317,7 +325,8 @@ class NewsAnalysisTests(TestCase):
         self.assertEqual(analysis.summary, 'Resumo anterior persistido.')
         self.assertEqual(analysis.impact_level, NewsItemAnalysis.IMPACT_MEDIUM)
         self.assertEqual(analysis.keywords, ['ICMS', 'STF'])
-        self.assertEqual(analysis.importance_score, 81)
+        self.assertEqual(analysis.base_importance_score, 81)
+        self.assertEqual(analysis.importance_score, 87)
         self.assertEqual(analysis.effective_date_label, '01/08/2026')
         self.assertIn('falha na consulta ao provider', analysis.error_message)
 
@@ -357,6 +366,104 @@ class NewsAnalysisTests(TestCase):
         self.assertEqual(NewsItemAnalysis.objects.count(), 2)
         self.assertTrue(NewsItemAnalysis.objects.filter(summary='Resumo IA 1').exists())
         self.assertTrue(NewsItemAnalysis.objects.filter(summary='Resumo IA 2').exists())
+
+    def test_refresh_news_applies_global_tag_bonus_and_renders_tooltip(self):
+        self._create_source()
+        feed_response = self._feed_response(
+            title='Atualização sobre ICMS e NCM',
+            summary='ICMS no resumo da notícia.',
+        )
+        article_response = self._article_response(
+            title='Matéria fiscal',
+            paragraphs=[
+                'ICMS e NCM entram em vigor com novos detalhes operacionais.',
+                'ICMS volta a ser citado com mais contexto para o contribuinte.',
+            ],
+        )
+
+        with (
+            patch(
+                'feeds.services.news_import.requests.get',
+                side_effect=self._request_get_side_effect(feed_response, article_response),
+            ),
+            patch(
+                'feeds.services.news_analysis.requests.post',
+                return_value=DummyJsonResponse(
+                    build_openai_analysis_payload(
+                        summary='Resumo com score reforçado por tags.',
+                        impact_level='medium',
+                        impact_context='Impacto moderado.',
+                        keywords=['ICMS', 'NCM'],
+                        importance_score=60,
+                        effective_date='2026-12-01',
+                        effective_date_label='Dez/2026',
+                    )
+                ),
+            ),
+        ):
+            response = self.client.post(reverse('feeds:refresh_news'), follow=True)
+
+        analysis = NewsItemAnalysis.objects.get()
+        self.assertEqual(analysis.base_importance_score, 60)
+        self.assertEqual(analysis.importance_score, 76)
+        self.assertEqual(analysis.tag_score_boost, 16)
+        self.assertEqual(
+            analysis.tag_score_matches,
+            [
+                {'name': 'ICMS', 'color': 'green', 'occurrences': 4, 'boost': 10},
+                {'name': 'NCM', 'color': 'blue', 'occurrences': 2, 'boost': 6},
+            ],
+        )
+        self.assertContains(response, 'Score: 76')
+        self.assertContains(response, 'Bônus total: +16')
+        self.assertContains(response, 'news-score-tooltip')
+
+    def test_refresh_news_uses_only_source_tags_when_source_has_specific_tags(self):
+        source = self._create_source()
+        simples = Tag.objects.get(name='Simples Nacional')
+        source.tags.set([simples])
+        feed_response = self._feed_response(
+            title='Atualização sobre ICMS e Simples Nacional',
+            summary='ICMS aparece novamente no resumo.',
+        )
+        article_response = self._article_response(
+            title='Matéria fiscal',
+            paragraphs=[
+                'Simples Nacional terá ajustes operacionais em breve, com reflexos para empresas menores e escritórios contábeis.',
+                'ICMS é citado novamente na notícia, mas apenas como contexto secundário para comparação com outros regimes.',
+            ],
+        )
+
+        with (
+            patch(
+                'feeds.services.news_import.requests.get',
+                side_effect=self._request_get_side_effect(feed_response, article_response),
+            ),
+            patch(
+                'feeds.services.news_analysis.requests.post',
+                return_value=DummyJsonResponse(
+                    build_openai_analysis_payload(
+                        summary='Resumo com filtro por tags da fonte.',
+                        impact_level='medium',
+                        impact_context='Impacto moderado.',
+                        keywords=['Simples Nacional'],
+                        importance_score=50,
+                        effective_date='2026-12-01',
+                        effective_date_label='Dez/2026',
+                    )
+                ),
+            ),
+        ):
+            self.client.post(reverse('feeds:refresh_news'), follow=True)
+
+        analysis = NewsItemAnalysis.objects.get()
+        self.assertEqual(analysis.base_importance_score, 50)
+        self.assertEqual(analysis.importance_score, 56)
+        self.assertEqual(analysis.tag_score_boost, 6)
+        self.assertEqual(
+            analysis.tag_score_matches,
+            [{'name': 'Simples Nacional', 'color': 'yellow', 'occurrences': 2, 'boost': 6}],
+        )
 
     def test_refresh_news_halts_ai_after_provider_rate_limit(self):
         self._create_source()

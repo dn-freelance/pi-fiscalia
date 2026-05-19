@@ -38,6 +38,27 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <fieldset class="source-tags-fieldset">
+                    <legend>Tags que pesam no score</legend>
+                    <p class="source-tags-help">
+                        Deixe sem marcação para usar todas as tags cadastradas.
+                        Se marcar pelo menos uma, o score dessa fonte será influenciado apenas por essas tags.
+                    </p>
+
+                    <div class="source-tag-selector">
+                        {% for tag in available_tags %}
+                            <label class="source-tag-option source-tag-option-{{ tag.color }}" for="input-source-edit-tag-{{ tag.id }}">
+                                <input id="input-source-edit-tag-{{ tag.id }}" type="checkbox" name="tags" value="{{ tag.id }}">
+                                <span>{{ tag.name }}</span>
+                            </label>
+                        {% empty %}
+                            <p class="source-tags-empty">Cadastre tags primeiro para poder restringir o score por fonte.</p>
+                        {% endfor %}
+                    </div>
+                </fieldset>
+            </div>
+
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-modal-close="div-source-edit-modal">Cancelar</button>
                 <button type="submit" class="btn btn-success">Salvar Alterações</button>

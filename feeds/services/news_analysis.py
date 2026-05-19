@@ -3,6 +3,7 @@ import html
 import json
 import logging
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import date
 
@@ -12,13 +13,17 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.html import strip_tags
 
-from feeds.models import NewsItemAnalysis
+from feeds.models import NewsItemAnalysis, Tag
 
 logger = logging.getLogger(__name__)
 
 MAX_ARTICLE_TEXT_LENGTH = 7000
 MIN_ARTICLE_TEXT_LENGTH = 120
 MAX_PROVIDER_BATCH_SIZE = 10
+TAG_SCORE_BASE_MATCH_BONUS = 4
+TAG_SCORE_REPEAT_MATCH_BONUS = 2
+TAG_SCORE_MAX_PER_TAG = 12
+TAG_SCORE_MAX_TOTAL_BOOST = 30
 HTML_BLOCK_PATTERNS = [
     re.compile(r'(?is)<article\b[^>]*>(.*?)</article>'),
     re.compile(r'(?is)<main\b[^>]*>(.*?)</main>'),
@@ -94,6 +99,8 @@ class PreparedNewsAnalysis:
     news_item: object
     input_hash: str
     context: NewsAnalysisContext
+    tag_score_boost: int = 0
+    tag_score_matches: list[dict] = field(default_factory=list)
 
 
 @dataclass
@@ -310,7 +317,7 @@ class NewsAnalysisService:
                     continue
 
                 _persist_analysis_success(
-                    prepared_item.news_item,
+                    prepared_item,
                     analysis_result,
                     self.provider.provider_name,
                     self.provider.model_name,
@@ -348,7 +355,8 @@ class NewsAnalysisService:
 
     def _prepare_news_item(self, news_item):
         article_content = _fetch_article_content(news_item.link, self.timeout_seconds)
-        input_hash = _build_input_hash(news_item, article_content.text)
+        tag_signature, tag_score_matches, tag_score_boost = _build_tag_score_data(news_item, article_content.text)
+        input_hash = _build_input_hash(news_item, article_content.text, tag_signature)
         existing_analysis = news_item.analysis_or_none
 
         if _analysis_is_current(existing_analysis, input_hash, self.pipeline_version):
@@ -372,6 +380,8 @@ class NewsAnalysisService:
             news_item=news_item,
             input_hash=input_hash,
             context=context,
+            tag_score_boost=tag_score_boost,
+            tag_score_matches=tag_score_matches,
         )
 
     def _analyze_prepared_items_individually(
@@ -421,7 +431,7 @@ class NewsAnalysisService:
                 continue
 
             _persist_analysis_success(
-                prepared_item.news_item,
+                prepared_item,
                 analysis_result,
                 self.provider.provider_name,
                 self.provider.model_name,
@@ -759,7 +769,106 @@ def _analysis_is_current(existing_analysis, input_hash, pipeline_version):
     return existing_analysis.input_hash == input_hash
 
 
-def _build_input_hash(news_item, article_text):
+def _build_tag_score_data(news_item, article_text):
+    scope, score_tags = _resolve_score_tags(news_item.source)
+    signature = _build_score_tag_signature(scope, score_tags)
+
+    if not score_tags:
+        return signature, [], 0
+
+    normalized_content = _normalize_tag_matching_text('\n'.join([
+        news_item.title,
+        news_item.summary,
+        article_text,
+    ]))
+    if not normalized_content:
+        return signature, [], 0
+
+    raw_matches = []
+    for tag in score_tags:
+        occurrences = _count_tag_occurrences(normalized_content, tag.name)
+        if occurrences <= 0:
+            continue
+
+        raw_matches.append({
+            'name': tag.name,
+            'color': tag.color,
+            'occurrences': occurrences,
+            'boost': _raw_tag_boost(occurrences),
+        })
+
+    if not raw_matches:
+        return signature, [], 0
+
+    total_boost = 0
+    applied_matches = []
+    raw_matches.sort(key=lambda item: (-item['occurrences'], item['name'].casefold()))
+
+    for match in raw_matches:
+        remaining_boost = TAG_SCORE_MAX_TOTAL_BOOST - total_boost
+        if remaining_boost <= 0:
+            break
+
+        applied_boost = min(match['boost'], remaining_boost)
+        if applied_boost <= 0:
+            continue
+
+        applied_matches.append({
+            'name': match['name'],
+            'color': match['color'],
+            'occurrences': match['occurrences'],
+            'boost': applied_boost,
+        })
+        total_boost += applied_boost
+
+    return signature, applied_matches, total_boost
+
+
+def _resolve_score_tags(source):
+    source_tags = list(source.tags.all())
+    source_tags.sort(key=lambda tag: tag.name.casefold())
+    if source_tags:
+        return 'source', source_tags
+
+    return 'global', list(Tag.objects.only('id', 'name', 'color').order_by('name'))
+
+
+def _build_score_tag_signature(scope, score_tags):
+    normalized_tags = [
+        f'{tag.id}:{_normalize_tag_matching_text(tag.name)}'
+        for tag in score_tags
+    ]
+    return f'{scope}|{"|".join(normalized_tags)}'
+
+
+def _normalize_tag_matching_text(value):
+    text = _clean_text(value)
+    if not text:
+        return ''
+
+    normalized = unicodedata.normalize('NFKD', text)
+    normalized = ''.join(char for char in normalized if not unicodedata.combining(char))
+    normalized = normalized.casefold()
+    return re.sub(r'\s+', ' ', normalized).strip()
+
+
+def _count_tag_occurrences(normalized_content, tag_name):
+    normalized_tag = _normalize_tag_matching_text(tag_name)
+    if not normalized_tag:
+        return 0
+
+    pattern = re.compile(rf'(?<!\w){re.escape(normalized_tag)}(?!\w)')
+    return len(pattern.findall(normalized_content))
+
+
+def _raw_tag_boost(occurrences):
+    return min(
+        TAG_SCORE_MAX_PER_TAG,
+        TAG_SCORE_BASE_MATCH_BONUS + max(0, occurrences - 1) * TAG_SCORE_REPEAT_MATCH_BONUS,
+    )
+
+
+def _build_input_hash(news_item, article_text, tag_signature):
     raw_value = '\n'.join([
         news_item.source.name,
         news_item.source.category.name if news_item.source.category_id else '',
@@ -768,6 +877,7 @@ def _build_input_hash(news_item, article_text):
         news_item.link,
         _published_label(news_item.published_at),
         article_text,
+        tag_signature,
     ])
     normalized_value = re.sub(r'\s+', ' ', raw_value).strip().casefold()
     return hashlib.sha256(normalized_value.encode('utf-8')).hexdigest()
@@ -781,8 +891,17 @@ def _published_label(value):
     return localized_value.isoformat()
 
 
-def _persist_analysis_success(news_item, analysis_result, provider_name, model_name, input_hash, pipeline_version):
+def _persist_analysis_success(prepared_item, analysis_result, provider_name, model_name, input_hash, pipeline_version):
     now = timezone.now()
+    news_item = prepared_item.news_item
+    final_importance_score = analysis_result.importance_score
+    tag_score_boost = 0
+    tag_score_matches = []
+
+    if final_importance_score is not None and prepared_item.tag_score_boost:
+        tag_score_boost = prepared_item.tag_score_boost
+        tag_score_matches = prepared_item.tag_score_matches
+        final_importance_score = min(100, final_importance_score + tag_score_boost)
 
     with transaction.atomic():
         analysis, _ = NewsItemAnalysis.objects.get_or_create(news_item=news_item)
@@ -790,7 +909,10 @@ def _persist_analysis_success(news_item, analysis_result, provider_name, model_n
         analysis.impact_level = analysis_result.impact_level
         analysis.impact_context = analysis_result.impact_context
         analysis.keywords = analysis_result.keywords
-        analysis.importance_score = analysis_result.importance_score
+        analysis.base_importance_score = analysis_result.importance_score
+        analysis.importance_score = final_importance_score
+        analysis.tag_score_boost = tag_score_boost
+        analysis.tag_score_matches = tag_score_matches
         analysis.effective_date = analysis_result.effective_date
         analysis.effective_date_label = analysis_result.effective_date_label
         analysis.status = NewsItemAnalysis.STATUS_COMPLETED
@@ -814,7 +936,10 @@ def _persist_analysis_failure(news_item, provider_name, model_name, pipeline_ver
             analysis.impact_level = ''
             analysis.impact_context = ''
             analysis.keywords = []
+            analysis.base_importance_score = None
             analysis.importance_score = None
+            analysis.tag_score_boost = 0
+            analysis.tag_score_matches = []
             analysis.effective_date = None
             analysis.effective_date_label = ''
             analysis.status = NewsItemAnalysis.STATUS_FAILED

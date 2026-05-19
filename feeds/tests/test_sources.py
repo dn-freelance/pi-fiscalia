@@ -4,7 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from feeds.models import DashboardWeeklySummary, Source, SourceCategory
+from feeds.models import DashboardWeeklySummary, Source, SourceCategory, Tag
 
 
 class SourceViewTests(TestCase):
@@ -29,6 +29,25 @@ class SourceViewTests(TestCase):
 
         self.assertRedirects(response, reverse('feeds:sources'))
         self.assertTrue(Source.objects.filter(name='Receita Federal', category=self.federal).exists())
+
+    def test_create_source_persists_selected_tags(self):
+        icms = Tag.objects.get(name='ICMS')
+        ncm = Tag.objects.get(name='NCM')
+
+        response = self.client.post(
+            reverse('feeds:create_source'),
+            {
+                'name': 'Fonte com tags',
+                'url': 'https://example.com/fonte-com-tags/rss',
+                'description': 'Fonte filtrada por tags.',
+                'category': self.federal.id,
+                'tags': [str(icms.id), str(ncm.id)],
+            },
+        )
+
+        self.assertRedirects(response, reverse('feeds:sources'))
+        source = Source.objects.get(name='Fonte com tags')
+        self.assertCountEqual(source.tags.values_list('name', flat=True), ['ICMS', 'NCM'])
 
     def test_create_source_rejects_invalid_payload(self):
         response = self.client.post(
@@ -68,6 +87,33 @@ class SourceViewTests(TestCase):
         self.assertEqual(source.name, 'Atualizada')
         self.assertEqual(source.category, self.estadual)
         self.assertFalse(source.active)
+
+    def test_update_source_replaces_selected_tags(self):
+        icms = Tag.objects.get(name='ICMS')
+        ncm = Tag.objects.get(name='NCM')
+        simples = Tag.objects.get(name='Simples Nacional')
+        source = Source.objects.create(
+            name='Fonte com tags',
+            url='https://example.com/tags/rss',
+            description='Descrição antiga.',
+            category=self.federal,
+        )
+        source.tags.set([icms, ncm])
+
+        response = self.client.post(
+            reverse('feeds:update_source', args=[source.id]),
+            {
+                'name': 'Fonte com tags',
+                'url': 'https://example.com/tags/rss',
+                'description': 'Descrição atualizada.',
+                'category': self.federal.id,
+                'tags': [str(simples.id)],
+            },
+        )
+
+        self.assertRedirects(response, reverse('feeds:sources'))
+        source.refresh_from_db()
+        self.assertCountEqual(source.tags.values_list('name', flat=True), ['Simples Nacional'])
 
     def test_delete_source_removes_source(self):
         source = Source.objects.create(

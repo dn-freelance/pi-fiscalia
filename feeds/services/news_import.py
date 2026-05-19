@@ -171,7 +171,7 @@ def build_news_import_feedback(result):
 def import_news_items(timeout=15, progress_callback=None):
     result = NewsImportResult()
     analysis_service, analysis_warning = build_news_analysis_service()
-    sources = Source.objects.filter(active=True).order_by('name')
+    sources = Source.objects.filter(active=True).select_related('category').prefetch_related('tags').order_by('name')
     result.source_count = sources.count()
     analysis_candidates = []
 

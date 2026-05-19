@@ -40,6 +40,15 @@
                         <div class="source-tags">
                             <span class="source-pill">{{ source.category.name }}</span>
                             {% if source.active %}<span class="source-pill is-active">Ativa</span>{% endif %}
+                            {% with source_tags=source.tags.all %}
+                                {% if source_tags %}
+                                    {% for tag in source_tags %}
+                                        <span class="source-tag-chip source-tag-chip-{{ tag.color }}">{{ tag.name }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="source-pill source-pill-muted">Score usa todas as tags</span>
+                                {% endif %}
+                            {% endwith %}
                         </div>
                     </div>
 
@@ -63,6 +72,7 @@
                         data-source-url="{{ source.url }}"
                         data-source-description="{{ source.description }}"
                         data-source-category="{{ source.category_id }}"
+                        data-source-tags="{% for tag in source.tags.all %}{{ tag.id }}{% if not forloop.last %},{% endif %}{% endfor %}"
                     >
                         <i data-lucide="pencil"></i>
                     </button>

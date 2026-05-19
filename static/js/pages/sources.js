@@ -1,4 +1,24 @@
 (function () {
+    function setSelectedSourceTags(form, selectedTagIds) {
+        if (!form) {
+            return;
+        }
+
+        var selectedSet = new Set(selectedTagIds);
+        form.querySelectorAll('input[name="tags"]').forEach(function (input) {
+            input.checked = selectedSet.has(String(input.value));
+        });
+    }
+
+    function parseSelectedTags(rawValue) {
+        return (rawValue || '')
+            .split(',')
+            .map(function (value) {
+                return value.trim();
+            })
+            .filter(Boolean);
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.js-open-edit-source').forEach(function (button) {
             button.addEventListener('click', function () {
@@ -12,7 +32,8 @@
                 form.elements.name.value = button.dataset.sourceName || '';
                 form.elements.url.value = button.dataset.sourceUrl || '';
                 form.elements.description.value = button.dataset.sourceDescription || '';
-                form.elements.category.value = button.dataset.sourceCategory || 'Federal';
+                form.elements.category.value = button.dataset.sourceCategory || '';
+                setSelectedSourceTags(form, parseSelectedTags(button.dataset.sourceTags));
                 window.Fiscalia.showModal('div-source-edit-modal', button);
             });
         });

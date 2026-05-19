@@ -260,6 +260,7 @@ class NewsViewTests(TestCase):
 
     def setUp(self):
         self.client.defaults['HTTP_X_FISCALIA_SYNC_IMPORT'] = '1'
+        Source.objects.all().delete()
 
     def test_refresh_news_imports_items_without_duplicates(self):
         Source.objects.create(

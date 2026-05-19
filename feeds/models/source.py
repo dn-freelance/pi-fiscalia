@@ -13,6 +13,12 @@ class Source(models.Model):
         on_delete=models.PROTECT,
         related_name='sources',
     )
+    tags = models.ManyToManyField(
+        'feeds.Tag',
+        verbose_name='tags de score',
+        related_name='sources',
+        blank=True,
+    )
     active = models.BooleanField('ativa', default=True)
     created_at = models.DateTimeField('criado em', auto_now_add=True)
     updated_at = models.DateTimeField('atualizado em', auto_now=True)

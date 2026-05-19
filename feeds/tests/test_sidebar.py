@@ -10,6 +10,9 @@ class SidebarContextTests(TestCase):
     def setUpTestData(cls):
         cls.federal = SourceCategory.objects.get(name='Federal')
 
+    def setUp(self):
+        Source.objects.all().delete()
+
     def test_sidebar_shows_empty_state_and_pending_configuration(self):
         response = self.client.get(reverse('feeds:index'))
 
