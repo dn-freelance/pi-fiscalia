@@ -8,6 +8,8 @@ from feeds.models import DashboardWeeklySummary, Source, SourceCategory
 
 
 class SourceViewTests(TestCase):
+    default_source_url = 'https://www.gov.br/receitafederal/pt-br/assuntos/noticias/RSS'
+
     @classmethod
     def setUpTestData(cls):
         cls.federal = SourceCategory.objects.get(name='Federal')
@@ -39,7 +41,8 @@ class SourceViewTests(TestCase):
         )
 
         self.assertRedirects(response, reverse('feeds:sources'))
-        self.assertEqual(Source.objects.count(), 0)
+        self.assertEqual(Source.objects.count(), 1)
+        self.assertTrue(Source.objects.filter(url=self.default_source_url).exists())
 
     def test_update_source_changes_editable_fields_and_preserves_status(self):
         source = Source.objects.create(
