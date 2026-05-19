@@ -6,39 +6,41 @@
     aria-labelledby="heading-source-create-modal"
     hidden
 >
-    <div class="modal-box" tabindex="-1">
+    <div class="modal-box modal-box-source-form" tabindex="-1">
         <div class="modal-header">
             <h2 id="heading-source-create-modal">Nova Fonte RSS</h2>
             <button type="button" class="close-btn" aria-label="Fechar modal" data-modal-close="div-source-create-modal">&times;</button>
         </div>
 
-        <form id="form-source-create" method="post" action="{% url 'feeds:create_source' %}">
+        <form id="form-source-create" method="post" action="{% url 'feeds:create_source' %}" class="source-form-layout">
             {% csrf_token %}
-            <div class="form-group">
-                <label for="input-source-create-name">Nome da Fonte</label>
-                <input id="input-source-create-name" name="name" type="text" placeholder="Ex: Receita Federal do Brasil" required>
+            <div class="source-form-main-fields">
+                <div class="form-group">
+                    <label for="input-source-create-name">Nome da Fonte</label>
+                    <input id="input-source-create-name" name="name" type="text" placeholder="Ex: Receita Federal do Brasil" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="input-source-create-url">URL do Feed RSS</label>
+                    <input id="input-source-create-url" name="url" type="url" placeholder="https://exemplo.com/rss" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="textarea-source-create-description">Descrição</label>
+                    <textarea id="textarea-source-create-description" name="description" placeholder="Breve descrição do conteúdo"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="select-source-create-category">Categoria</label>
+                    <select id="select-source-create-category" name="category" required>
+                        {% for category in source_categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="input-source-create-url">URL do Feed RSS</label>
-                <input id="input-source-create-url" name="url" type="url" placeholder="https://exemplo.com/rss" required>
-            </div>
-
-            <div class="form-group">
-                <label for="textarea-source-create-description">Descrição</label>
-                <textarea id="textarea-source-create-description" name="description" placeholder="Breve descrição do conteúdo"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="select-source-create-category">Categoria</label>
-                <select id="select-source-create-category" name="category" required>
-                    {% for category in source_categories %}
-                        <option value="{{ category.id }}">{{ category.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
+            <div class="form-group source-form-tags-panel">
                 <fieldset class="source-tags-fieldset">
                     <legend>Tags que pesam no score</legend>
                     <p class="source-tags-help">
@@ -59,7 +61,7 @@
                 </fieldset>
             </div>
 
-            <div class="modal-footer">
+            <div class="modal-footer source-form-footer">
                 <button type="button" class="btn btn-light" data-modal-close="div-source-create-modal">Cancelar</button>
                 <button type="submit" class="btn btn-success">Adicionar Fonte</button>
             </div>

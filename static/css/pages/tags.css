@@ -255,8 +255,7 @@
 }
 
 @media (max-width: 640px) {
-  .tags-header,
-  .tag-card {
+  .tags-header {
     align-items: stretch;
     flex-direction: column;
   }
@@ -267,6 +266,5 @@
 
   .tag-actions {
     justify-content: flex-end;
-    width: 100%;
   }
 }
