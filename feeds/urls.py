@@ -25,6 +25,9 @@ urlpatterns = [
     ),
     path('informativos/acoes-em-lote/', news.bulk_update_news_read, name='bulk_update_news_read'),
     path('informativos/<int:news_id>/alternar-leitura/', news.toggle_news_read, name='toggle_news_read'),
+    path('informativos/<int:news_id>/alternar-acompanhamento/', news.toggle_news_follow, name='toggle_news_follow'),
+    path('notificacoes/vigencia/', news.effective_date_reminders, name='effective_date_reminders'),
+    path('notificacoes/vigencia/dispensar/', news.dismiss_effective_date_reminder, name='dismiss_effective_date_reminder'),
 
     path('fontes/', sources.index, name='sources'),
     path('fontes/cadastrar/', sources.create_source, name='create_source'),

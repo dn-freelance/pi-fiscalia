@@ -1,15 +1,25 @@
+import json
+from datetime import timedelta
 from urllib.parse import urlencode
 
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import F, Q
 from django.db.models.functions import Coalesce
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
 
-from feeds.models import NewsImportJob, NewsItem, NewsItemAnalysis, Source
+from feeds.models import (
+    NewsImportJob,
+    NewsItem,
+    NewsItemAnalysis,
+    NewsItemFollow,
+    NewsItemReminderNotification,
+    Source,
+)
 from feeds.services.news_import_jobs import run_news_import_job, start_news_import_job
 
 STATUS_ALL = 'all'
@@ -21,6 +31,7 @@ RELEVANCE_MEDIUM = NewsItemAnalysis.IMPACT_MEDIUM
 RELEVANCE_LOW = NewsItemAnalysis.IMPACT_LOW
 BULK_ACTION_MARK_READ = 'mark_read'
 BULK_ACTION_MARK_UNREAD = 'mark_unread'
+REMINDER_DAY_OFFSETS = (30, 7, 1, 0)
 
 STATUS_OPTIONS = [
     (STATUS_ALL, 'Todos'),
@@ -67,10 +78,18 @@ def index(request):
     if filters['effective_date_to']:
         news_items = news_items.filter(analysis__effective_date__lte=filters['effective_date_to'])
 
-    news_items = news_items.order_by(
+    news_items = list(news_items.order_by(
         Coalesce('published_at', 'created_at').desc(),
         '-created_at',
+    ))
+    tracked_news_ids = set(
+        NewsItemFollow.objects.filter(news_item_id__in=[item.id for item in news_items]).values_list('news_item_id', flat=True)
     )
+
+    for item in news_items:
+        analysis = item.analysis_or_none
+        item.has_trackable_effective_date = bool(analysis is not None and analysis.effective_date is not None)
+        item.is_following_effective_date = item.id in tracked_news_ids
 
     context = {
         'news_items': news_items,
@@ -155,6 +174,92 @@ def toggle_news_read(request, news_id):
     messages.success(request, f'Informativo marcado como {status_label}.')
 
     return _redirect_with_filters(request)
+
+
+@require_POST
+def toggle_news_follow(request, news_id):
+    news_item = get_object_or_404(NewsItem.objects.select_related('analysis'), pk=news_id)
+    analysis = news_item.analysis_or_none
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    if is_ajax:
+        if analysis is None or analysis.effective_date is None:
+            return JsonResponse(
+                {
+                    'ok': False,
+                    'message': 'Esse informativo ainda nÃ£o tem uma data de vigÃªncia para acompanhamento.',
+                },
+                status=400,
+            )
+
+        follow, created = NewsItemFollow.objects.get_or_create(news_item=news_item)
+        if created:
+            return JsonResponse(
+                {
+                    'ok': True,
+                    'is_following': True,
+                    'message': 'Acompanhamento da vigÃªncia ativado para este informativo.',
+                }
+            )
+
+        NewsItemReminderNotification.objects.filter(news_item=news_item).delete()
+        follow.delete()
+        return JsonResponse(
+            {
+                'ok': True,
+                'is_following': False,
+                'message': 'Acompanhamento da vigÃªncia desativado para este informativo.',
+            }
+        )
+
+    if analysis is None or analysis.effective_date is None:
+        message = 'Esse informativo ainda nÃ£o tem uma data de vigÃªncia para acompanhamento.'
+        if is_ajax:
+            return JsonResponse({'ok': False, 'message': message}, status=400)
+        messages.error(request, 'Esse informativo ainda não tem uma data de vigência para acompanhamento.')
+        return _redirect_with_filters(request)
+
+    follow, created = NewsItemFollow.objects.get_or_create(news_item=news_item)
+    if created:
+        messages.success(request, 'Acompanhamento da vigência ativado para este informativo.')
+    else:
+        NewsItemReminderNotification.objects.filter(news_item=news_item).delete()
+        follow.delete()
+        messages.success(request, 'Acompanhamento da vigência desativado para este informativo.')
+
+    return _redirect_with_filters(request)
+
+
+def effective_date_reminders(request):
+    today = timezone.localdate()
+    _ensure_due_reminders(today)
+
+    reminders = (
+        NewsItemReminderNotification.objects.filter(
+            reminder_date=today,
+            dismissed_at__isnull=True,
+            news_item__follow__isnull=False,
+            news_item__analysis__effective_date=F('effective_date'),
+        )
+        .select_related('news_item', 'news_item__analysis', 'news_item__source')
+        .order_by('days_before', '-created_at')
+    )
+
+    return JsonResponse(
+        {
+            'notifications': [_build_reminder_payload(reminder) for reminder in reminders],
+        }
+    )
+
+
+@require_POST
+def dismiss_effective_date_reminder(request):
+    payload = _payload_from_request(request)
+    reminder_id = payload.get('notification_id')
+    reminder = get_object_or_404(NewsItemReminderNotification, pk=reminder_id)
+    reminder.dismissed_at = timezone.now()
+    reminder.save(update_fields=['dismissed_at', 'updated_at'])
+    return JsonResponse({'ok': True})
 
 
 @require_POST
@@ -307,3 +412,96 @@ def _job_payload(job):
             'skipped_count': job.analysis_skipped_count,
         },
     }
+
+
+def _ensure_due_reminders(reference_date):
+    follows = NewsItemFollow.objects.select_related('news_item', 'news_item__analysis')
+
+    for follow in follows:
+        analysis = follow.news_item.analysis_or_none
+        if analysis is None or analysis.effective_date is None:
+            continue
+
+        days_before = (analysis.effective_date - reference_date).days
+        if days_before not in REMINDER_DAY_OFFSETS:
+            continue
+
+        NewsItemReminderNotification.objects.get_or_create(
+            news_item=follow.news_item,
+            effective_date=analysis.effective_date,
+            days_before=days_before,
+            defaults={'reminder_date': analysis.effective_date - timedelta(days=days_before)},
+        )
+
+
+def _build_reminder_payload(reminder):
+    item = reminder.news_item
+    analysis = item.analysis_or_none
+    description = ''
+
+    if analysis is not None and analysis.summary:
+        description = analysis.summary
+    elif item.summary:
+        description = item.summary
+
+    return {
+        'id': reminder.id,
+        'title': item.title,
+        'description': _truncate_text(description.strip(), 220),
+        'priority': _priority_from_analysis(analysis),
+        'priority_label': _priority_label_from_analysis(analysis),
+        'effective_date_display': analysis.effective_date_display if analysis is not None else reminder.effective_date.strftime('%d/%m/%Y'),
+        'reminder_label': _reminder_label(reminder.days_before),
+        'source_name': item.source.name,
+        'href': f"{reverse('feeds:news')}#article-news-card-{item.id}",
+    }
+
+
+def _priority_from_analysis(analysis):
+    if analysis is None:
+        return 'medium'
+
+    if analysis.impact_level == NewsItemAnalysis.IMPACT_HIGH:
+        return 'high'
+    if analysis.impact_level == NewsItemAnalysis.IMPACT_LOW:
+        return 'low'
+    return 'medium'
+
+
+def _priority_label_from_analysis(analysis):
+    if analysis is None:
+        return 'ACOMPANHAR'
+
+    return {
+        NewsItemAnalysis.IMPACT_HIGH: 'ALTA PRIORIDADE',
+        NewsItemAnalysis.IMPACT_MEDIUM: 'ACOMPANHAR',
+        NewsItemAnalysis.IMPACT_LOW: 'BAIXA PRIORIDADE',
+    }.get(analysis.impact_level, 'ACOMPANHAR')
+
+
+def _reminder_label(days_before):
+    if days_before == 0:
+        return 'Vigência hoje'
+    if days_before == 1:
+        return 'Vigência amanhã'
+    return f'Vigência em {days_before} dias'
+
+
+def _payload_from_request(request):
+    if (request.content_type or '').startswith('application/json'):
+        try:
+            raw_body = request.body.decode('utf-8') if request.body else '{}'
+            return json.loads(raw_body)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            return {}
+
+    return {
+        'notification_id': request.POST.get('notification_id'),
+    }
+
+
+def _truncate_text(value, max_length):
+    if len(value) <= max_length:
+        return value
+
+    return value[: max_length - 1].rstrip() + '…'

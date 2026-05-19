@@ -9,7 +9,14 @@ from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from feeds.models import NewsItem, NewsItemAnalysis, Source, SourceCategory
+from feeds.models import (
+    NewsItem,
+    NewsItemAnalysis,
+    NewsItemFollow,
+    NewsItemReminderNotification,
+    Source,
+    SourceCategory,
+)
 
 
 class DummyResponse:
@@ -656,6 +663,276 @@ class NewsViewTests(TestCase):
             ),
         )
         self.assertContains(response, 'Informativo marcado como lido.')
+
+    def test_toggle_news_follow_creates_subscription_and_preserves_filters(self):
+        source = Source.objects.create(
+            name='Fonte Acompanhamento',
+            url='https://example.com/follow/rss',
+            category=self.federal,
+        )
+        item = NewsItem.objects.create(
+            source=source,
+            title='Notícia com vigência acompanhável',
+            summary='Resumo curto.',
+            link='https://example.com/follow-news',
+            external_id='follow-1',
+            dedupe_key='dedupe-follow-1',
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=timezone.localdate() + timedelta(days=30),
+        )
+
+        response = self.client.post(
+            reverse('feeds:toggle_news_follow', args=[item.id]),
+            {
+                'q': 'follow',
+                'source': str(source.id),
+                'status': 'unread',
+                'effective_date_from': '2026-05-01',
+                'effective_date_to': '2026-05-31',
+            },
+            follow=True,
+        )
+
+        self.assertTrue(NewsItemFollow.objects.filter(news_item=item).exists())
+        self.assertEqual(
+            response.redirect_chain[0][0],
+            (
+                f"{reverse('feeds:news')}?q=follow&source={source.id}&status=unread"
+                '&effective_date_from=2026-05-01&effective_date_to=2026-05-31'
+            ),
+        )
+        self.assertContains(response, 'Acompanhamento da vigência ativado para este informativo.')
+
+    def test_toggle_news_follow_returns_json_for_ajax_requests(self):
+        source = Source.objects.create(
+            name='Fonte Acompanhamento Ajax',
+            url='https://example.com/follow-ajax/rss',
+            category=self.federal,
+        )
+        item = NewsItem.objects.create(
+            source=source,
+            title='NotÃ­cia com vigÃªncia via ajax',
+            summary='Resumo curto.',
+            link='https://example.com/follow-ajax-news',
+            external_id='follow-ajax-1',
+            dedupe_key='dedupe-follow-ajax-1',
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=timezone.localdate() + timedelta(days=7),
+        )
+
+        enable_response = self.client.post(
+            reverse('feeds:toggle_news_follow', args=[item.id]),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(enable_response.status_code, 200)
+        self.assertEqual(
+            enable_response.json(),
+            {
+                'ok': True,
+                'is_following': True,
+                'message': 'Acompanhamento da vigÃªncia ativado para este informativo.',
+            },
+        )
+        self.assertTrue(NewsItemFollow.objects.filter(news_item=item).exists())
+
+        disable_response = self.client.post(
+            reverse('feeds:toggle_news_follow', args=[item.id]),
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(disable_response.status_code, 200)
+        self.assertEqual(
+            disable_response.json(),
+            {
+                'ok': True,
+                'is_following': False,
+                'message': 'Acompanhamento da vigÃªncia desativado para este informativo.',
+            },
+        )
+        self.assertFalse(NewsItemFollow.objects.filter(news_item=item).exists())
+
+    def test_news_index_renders_follow_button_only_when_effective_date_exists(self):
+        source = Source.objects.create(
+            name='Fonte Sino',
+            url='https://example.com/bell/rss',
+            category=self.federal,
+        )
+        tracked_item = NewsItem.objects.create(
+            source=source,
+            title='Item com vigência',
+            summary='Resumo A',
+            link='https://example.com/item-a',
+            external_id='bell-a',
+            dedupe_key='dedupe-bell-a',
+        )
+        non_tracked_item = NewsItem.objects.create(
+            source=source,
+            title='Item sem vigência',
+            summary='Resumo B',
+            link='https://example.com/item-b',
+            external_id='bell-b',
+            dedupe_key='dedupe-bell-b',
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=tracked_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=timezone.localdate() + timedelta(days=7),
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=non_tracked_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=None,
+        )
+
+        response = self.client.get(reverse('feeds:news'))
+
+        self.assertContains(response, 'Acompanhar', count=1)
+        self.assertContains(response, reverse('feeds:toggle_news_follow', args=[tracked_item.id]))
+        self.assertNotContains(response, reverse('feeds:toggle_news_follow', args=[non_tracked_item.id]))
+
+    def test_effective_date_reminders_returns_due_followed_items_only_for_exact_offsets(self):
+        source = Source.objects.create(
+            name='Fonte Lembrete',
+            url='https://example.com/reminder/rss',
+            category=self.federal,
+        )
+        due_item = NewsItem.objects.create(
+            source=source,
+            title='Mudança acompanhada',
+            summary='Resumo A',
+            link='https://example.com/reminder-a',
+            external_id='reminder-a',
+            dedupe_key='dedupe-reminder-a',
+        )
+        not_due_item = NewsItem.objects.create(
+            source=source,
+            title='Mudança fora da janela',
+            summary='Resumo B',
+            link='https://example.com/reminder-b',
+            external_id='reminder-b',
+            dedupe_key='dedupe-reminder-b',
+        )
+        unfollowed_item = NewsItem.objects.create(
+            source=source,
+            title='Mudança sem sino ativado',
+            summary='Resumo C',
+            link='https://example.com/reminder-c',
+            external_id='reminder-c',
+            dedupe_key='dedupe-reminder-c',
+        )
+        base_date = timezone.localdate()
+        NewsItemAnalysis.objects.create(
+            news_item=due_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            impact_level=NewsItemAnalysis.IMPACT_HIGH,
+            summary='Resumo IA prioritário.',
+            effective_date=base_date + timedelta(days=7),
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=not_due_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=base_date + timedelta(days=5),
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=unfollowed_item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=base_date + timedelta(days=7),
+        )
+        NewsItemFollow.objects.create(news_item=due_item)
+        NewsItemFollow.objects.create(news_item=not_due_item)
+
+        response = self.client.get(reverse('feeds:effective_date_reminders'))
+
+        payload = response.json()
+        self.assertEqual(len(payload['notifications']), 1)
+        self.assertEqual(payload['notifications'][0]['title'], 'Mudança acompanhada')
+        self.assertEqual(payload['notifications'][0]['reminder_label'], 'Vigência em 7 dias')
+        self.assertEqual(NewsItemReminderNotification.objects.count(), 1)
+
+    def test_dismiss_effective_date_reminder_marks_notification_as_dismissed(self):
+        source = Source.objects.create(
+            name='Fonte Dismiss',
+            url='https://example.com/dismiss/rss',
+            category=self.federal,
+        )
+        item = NewsItem.objects.create(
+            source=source,
+            title='Mudança para dispensar',
+            summary='Resumo.',
+            link='https://example.com/dismiss-news',
+            external_id='dismiss-1',
+            dedupe_key='dedupe-dismiss-1',
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=timezone.localdate(),
+        )
+        NewsItemFollow.objects.create(news_item=item)
+        notification = NewsItemReminderNotification.objects.create(
+            news_item=item,
+            effective_date=timezone.localdate(),
+            reminder_date=timezone.localdate(),
+            days_before=0,
+        )
+
+        response = self.client.post(
+            reverse('feeds:dismiss_effective_date_reminder'),
+            data=json.dumps({'notification_id': notification.id}),
+            content_type='application/json',
+        )
+
+        notification.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(notification.dismissed_at)
+
+    def test_refollowing_news_recreates_due_notification_after_dismiss(self):
+        source = Source.objects.create(
+            name='Fonte Refollow',
+            url='https://example.com/refollow/rss',
+            category=self.federal,
+        )
+        item = NewsItem.objects.create(
+            source=source,
+            title='Mudança com vigência amanhã',
+            summary='Resumo.',
+            link='https://example.com/refollow-news',
+            external_id='refollow-1',
+            dedupe_key='dedupe-refollow-1',
+        )
+        NewsItemAnalysis.objects.create(
+            news_item=item,
+            status=NewsItemAnalysis.STATUS_COMPLETED,
+            effective_date=timezone.localdate() + timedelta(days=1),
+        )
+
+        self.client.post(reverse('feeds:toggle_news_follow', args=[item.id]))
+        first_payload = self.client.get(reverse('feeds:effective_date_reminders')).json()
+        first_notification_id = first_payload['notifications'][0]['id']
+
+        self.client.post(
+            reverse('feeds:dismiss_effective_date_reminder'),
+            data=json.dumps({'notification_id': first_notification_id}),
+            content_type='application/json',
+        )
+        self.client.post(reverse('feeds:toggle_news_follow', args=[item.id]))
+        self.client.post(reverse('feeds:toggle_news_follow', args=[item.id]))
+
+        second_payload = self.client.get(reverse('feeds:effective_date_reminders')).json()
+
+        self.assertEqual(len(second_payload['notifications']), 1)
+        self.assertEqual(second_payload['notifications'][0]['title'], 'Mudança com vigência amanhã')
+        self.assertEqual(
+            NewsItemReminderNotification.objects.filter(news_item=item, dismissed_at__isnull=True).count(),
+            1,
+        )
 
     def test_bulk_update_news_read_marks_selected_items_and_preserves_filters(self):
         source = Source.objects.create(

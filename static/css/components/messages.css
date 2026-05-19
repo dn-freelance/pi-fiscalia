@@ -91,6 +91,167 @@
   color: #ef4444;
 }
 
+.effective-reminders-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  pointer-events: none;
+  position: fixed;
+  right: 24px;
+  top: 210px;
+  width: min(41.5rem, calc(100vw - 64px));
+  z-index: 9997;
+}
+
+.effective-reminder {
+  animation: slideInUp 0.3s ease forwards;
+  background:
+    radial-gradient(circle at top right, rgba(255, 196, 196, 0.3), transparent 38%),
+    linear-gradient(180deg, #fff7f7 0%, #fff0f0 100%);
+  border: 2px solid #ff8b8b;
+  border-radius: 26px;
+  box-shadow: 0 18px 36px rgba(255, 107, 107, 0.14);
+  color: #0f172a;
+  overflow: hidden;
+  padding: 24px 26px 24px;
+  pointer-events: auto;
+  position: relative;
+}
+
+.effective-reminder.is-closing {
+  animation: slideOutDown 0.25s ease forwards;
+}
+
+.effective-reminder-top,
+.effective-reminder-meta,
+.effective-reminder-actions {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.effective-reminder-icon {
+  color: #ef4444;
+  flex-shrink: 0;
+  height: 24px;
+  width: 24px;
+}
+
+.effective-reminder-priority {
+  align-items: center;
+  background-color: #ef4444;
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  min-height: 32px;
+  padding: 0 15px;
+}
+
+.effective-reminder-priority.medium {
+  background-color: #f59e0b;
+  color: #ffffff;
+}
+
+.effective-reminder-priority.low {
+  background-color: #22c55e;
+  color: #ffffff;
+}
+
+.effective-reminder-close {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: #94a3b8;
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  height: 36px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 20px;
+  top: 18px;
+  width: 36px;
+}
+
+.effective-reminder-close:hover {
+  background-color: rgba(148, 163, 184, 0.1);
+  color: #475569;
+}
+
+.effective-reminder-close svg {
+  height: 18px;
+  width: 18px;
+}
+
+.effective-reminder-title {
+  color: #172033;
+  font-size: clamp(18px, 1.8vw, 22px);
+  font-weight: 800;
+  line-height: 1.45;
+  margin: 14px 52px 8px 0;
+}
+
+.effective-reminder-description {
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 18px;
+  max-width: none;
+}
+
+.effective-reminder-meta {
+  justify-content: flex-start;
+}
+
+.effective-reminder-chip {
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.92);
+  border: 1px solid #eadcd2;
+  border-radius: 999px;
+  color: #1f2937;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.effective-reminder-link {
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #d8dee8;
+  border-radius: 15px;
+  box-shadow: 0 2px 0 rgba(15, 23, 42, 0.03);
+  color: #111827;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
+.effective-reminder-link:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.effective-reminder-link svg {
+  height: 16px;
+  width: 16px;
+}
+
+.effective-reminder-actions {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
 @keyframes slideInUp {
   from {
     opacity: 0;
@@ -121,6 +282,51 @@
 
   .toast {
     max-width: calc(100vw - 32px);
+  }
+
+  .effective-reminders-container {
+    right: 16px;
+    top: 156px;
+    width: calc(100vw - 32px);
+  }
+}
+
+@media (max-width: 720px) {
+  .effective-reminders-container {
+    left: 12px;
+    right: 12px;
+    top: 96px;
+    width: auto;
+  }
+
+  .effective-reminder {
+    border-radius: 22px;
+    padding: 20px 18px 18px;
+  }
+
+  .effective-reminder-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .effective-reminder-title {
+    margin-right: 40px;
+  }
+
+  .effective-reminder-description {
+    max-width: none;
+  }
+
+  .effective-reminder-stack,
+  .effective-reminder-chip,
+  .effective-reminder-link {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .effective-reminder-close {
+    right: 12px;
+    top: 12px;
   }
 }
 

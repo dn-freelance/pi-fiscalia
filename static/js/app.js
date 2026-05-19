@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     var DESKTOP_SIDEBAR_MEDIA_QUERY = '(min-width: 1025px)';
     var activeModalState = null;
     var sidebarState = {
@@ -236,6 +236,24 @@
         }, 5000);
     }
 
+    function getCookie(name) {
+        var cookieValue = null;
+
+        if (!document.cookie) {
+            return cookieValue;
+        }
+
+        document.cookie.split(';').forEach(function (cookie) {
+            var trimmedCookie = cookie.trim();
+
+            if (trimmedCookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(trimmedCookie.substring(name.length + 1));
+            }
+        });
+
+        return cookieValue;
+    }
+
     function convertMessagesToToasts() {
         var messagesContainer = document.querySelector('.feedback-messages');
         if (!messagesContainer) {
@@ -254,6 +272,161 @@
         });
 
         messagesContainer.style.display = 'none';
+    }
+
+    function getOrCreateEffectiveRemindersContainer() {
+        var container = document.querySelector('.effective-reminders-container');
+
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'effective-reminders-container';
+            document.body.appendChild(container);
+        }
+
+        return container;
+    }
+
+    function reminderIconMarkup() {
+        return '<svg class="effective-reminder-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+    }
+
+    function closeIconMarkup() {
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 6-12 12"></path><path d="m6 6 12 12"></path></svg>';
+    }
+
+    function linkIconMarkup() {
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M10 14 21 3"></path><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path></svg>';
+    }
+
+    function removeReminderCard(card) {
+        if (!card) {
+            return;
+        }
+
+        card.classList.add('is-closing');
+        window.setTimeout(function () {
+            var container = card.parentElement;
+
+            card.remove();
+            if (container && !container.children.length) {
+                container.remove();
+            }
+        }, 250);
+    }
+
+    function dismissEffectiveReminder(root, notificationId, card) {
+        removeReminderCard(card);
+
+        window.fetch(root.dataset.dismissUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') || '',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                notification_id: notificationId
+            })
+        }).catch(function () {
+            return null;
+        });
+    }
+
+    function buildEffectiveReminderCard(root, notification) {
+        var card = document.createElement('article');
+        var top = document.createElement('div');
+        var topMeta = document.createElement('div');
+        var priority = document.createElement('span');
+        var closeButton = document.createElement('button');
+        var title = document.createElement('h3');
+        var description = document.createElement('p');
+        var actions = document.createElement('div');
+        var effectiveDateChip = document.createElement('span');
+        var link = document.createElement('a');
+
+        card.className = 'effective-reminder';
+
+        top.className = 'effective-reminder-top';
+        topMeta.className = 'effective-reminder-meta';
+        topMeta.insertAdjacentHTML('beforeend', reminderIconMarkup());
+
+        priority.className = 'effective-reminder-priority ' + (notification.priority || 'medium');
+        priority.textContent = notification.priority_label || 'ACOMPANHAR';
+        topMeta.appendChild(priority);
+
+        closeButton.className = 'effective-reminder-close';
+        closeButton.type = 'button';
+        closeButton.setAttribute('aria-label', 'Fechar notifica\u00e7\u00e3o');
+        closeButton.innerHTML = closeIconMarkup();
+        closeButton.addEventListener('click', function () {
+            dismissEffectiveReminder(root, notification.id, card);
+        });
+
+        title.className = 'effective-reminder-title';
+        title.textContent = notification.title || 'Vig\u00eancia acompanhada';
+
+        description.className = 'effective-reminder-description';
+        description.textContent = notification.description || 'Uma vig\u00eancia acompanhada alcan\u00e7ou um dos marcos que voc\u00ea pediu para monitorar.';
+
+        actions.className = 'effective-reminder-actions';
+
+        effectiveDateChip.className = 'effective-reminder-chip';
+        effectiveDateChip.textContent = 'Vig\u00eancia: ' + (notification.effective_date_display || '-');
+
+        link.className = 'effective-reminder-link';
+        link.href = notification.href || '#';
+        link.innerHTML = linkIconMarkup() + '<span>Ver mais</span>';
+
+        actions.appendChild(effectiveDateChip);
+        actions.appendChild(link);
+
+        top.appendChild(topMeta);
+        top.appendChild(closeButton);
+        card.appendChild(top);
+        card.appendChild(title);
+        card.appendChild(description);
+        card.appendChild(actions);
+
+        return card;
+    }
+
+    function setupEffectiveDateReminders() {
+        var root = document.getElementById('effective-date-reminders-root');
+
+        if (!root || !root.dataset.listUrl) {
+            return;
+        }
+
+        window.fetch(root.dataset.listUrl, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+
+                return response.json();
+            })
+            .then(function (payload) {
+                var notifications = payload && Array.isArray(payload.notifications) ? payload.notifications : [];
+                var container;
+
+                if (!notifications.length) {
+                    return;
+                }
+
+                container = getOrCreateEffectiveRemindersContainer();
+                container.innerHTML = '';
+
+                notifications.forEach(function (notification) {
+                    container.appendChild(buildEffectiveReminderCard(root, notification));
+                });
+            })
+            .catch(function () {
+                return null;
+            });
     }
 
     function setupAssistantWidget() {
@@ -384,6 +557,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         refreshIcons();
         convertMessagesToToasts();
+        setupEffectiveDateReminders();
         setupAssistantWidget();
         setupSidebar();
     });
@@ -396,3 +570,4 @@
         showToast: showToast,
     };
 }());
+

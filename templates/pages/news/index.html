@@ -237,19 +237,41 @@
                 {% endif %}
 
                 <div class="news-card-footer">
-                    <form method="post" action="{% url 'feeds:toggle_news_read' item.id %}" class="news-read-form">
-                        {% csrf_token %}
-                        <input type="hidden" name="q" value="{{ selected_query }}">
-                        <input type="hidden" name="source" value="{{ selected_source }}">
-                        <input type="hidden" name="status" value="{{ selected_status }}">
-                        <input type="hidden" name="relevance" value="{{ selected_relevance }}">
-                        <input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">
-                        <input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">
-                        <button type="submit" class="news-read-button {% if item.is_read %}is-read{% endif %}">
-                            <i data-lucide="{% if item.is_read %}mail-plus{% else %}mail-check{% endif %}"></i>
-                            <span>{% if item.is_read %}Marcar como não lido{% else %}Marcar como lido{% endif %}</span>
-                        </button>
-                    </form>
+                    <div class="news-card-actions">
+                        <form method="post" action="{% url 'feeds:toggle_news_read' item.id %}" class="news-read-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="q" value="{{ selected_query }}">
+                            <input type="hidden" name="source" value="{{ selected_source }}">
+                            <input type="hidden" name="status" value="{{ selected_status }}">
+                            <input type="hidden" name="relevance" value="{{ selected_relevance }}">
+                            <input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">
+                            <input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">
+                            <button type="submit" class="news-read-button {% if item.is_read %}is-read{% endif %}">
+                                <i data-lucide="{% if item.is_read %}mail-plus{% else %}mail-check{% endif %}"></i>
+                                <span>{% if item.is_read %}Marcar como não lido{% else %}Marcar como lido{% endif %}</span>
+                            </button>
+                        </form>
+
+                        {% if item.has_trackable_effective_date %}
+                            <form method="post" action="{% url 'feeds:toggle_news_follow' item.id %}" class="news-follow-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="q" value="{{ selected_query }}">
+                                <input type="hidden" name="source" value="{{ selected_source }}">
+                                <input type="hidden" name="status" value="{{ selected_status }}">
+                                <input type="hidden" name="relevance" value="{{ selected_relevance }}">
+                                <input type="hidden" name="effective_date_from" value="{{ selected_effective_date_from }}">
+                                <input type="hidden" name="effective_date_to" value="{{ selected_effective_date_to }}">
+                                <button
+                                    type="submit"
+                                    class="news-follow-button {% if item.is_following_effective_date %}is-active{% endif %}"
+                                    aria-pressed="{% if item.is_following_effective_date %}true{% else %}false{% endif %}"
+                                >
+                                    <i data-lucide="{% if item.is_following_effective_date %}bell-ring{% else %}bell{% endif %}"></i>
+                                    <span>Acompanhar</span>
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
 
                     <a href="{{ item.link }}" target="_blank" rel="noreferrer" class="news-original-link">
                         <i data-lucide="external-link"></i>

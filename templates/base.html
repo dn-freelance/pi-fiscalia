@@ -48,6 +48,13 @@
         </main>
     </div>
 
+    <div
+        id="effective-date-reminders-root"
+        data-list-url="{% url 'feeds:effective_date_reminders' %}"
+        data-dismiss-url="{% url 'feeds:dismiss_effective_date_reminder' %}"
+        hidden
+    ></div>
+
     <script src="{% static 'js/app.js' %}"></script>
     {% block scripts %}{% endblock %}
 </body>

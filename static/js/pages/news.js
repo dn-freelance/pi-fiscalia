@@ -1,4 +1,22 @@
 (function () {
+    function getCookie(name) {
+        var cookieValue = null;
+
+        if (!document.cookie) {
+            return cookieValue;
+        }
+
+        document.cookie.split(';').forEach(function (cookie) {
+            var trimmedCookie = cookie.trim();
+
+            if (trimmedCookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(trimmedCookie.substring(name.length + 1));
+            }
+        });
+
+        return cookieValue;
+    }
+
     function clearSelection(checkboxes, selectAllInput) {
         checkboxes.forEach(function (checkbox) {
             checkbox.checked = false;
@@ -47,6 +65,76 @@
         if (window.Fiscalia && typeof window.Fiscalia.refreshIcons === 'function') {
             window.Fiscalia.refreshIcons();
         }
+    }
+
+    function renderFollowButton(button, isFollowing) {
+        if (!button) {
+            return;
+        }
+
+        button.classList.toggle('is-active', Boolean(isFollowing));
+        button.setAttribute('aria-pressed', isFollowing ? 'true' : 'false');
+        button.innerHTML = '<i data-lucide="' + (isFollowing ? 'bell-ring' : 'bell') + '"></i><span>Acompanhar</span>';
+
+        if (window.Fiscalia && typeof window.Fiscalia.refreshIcons === 'function') {
+            window.Fiscalia.refreshIcons();
+        }
+    }
+
+    function setupFollowForms() {
+        var followForms = Array.from(document.querySelectorAll('.news-follow-form'));
+
+        followForms.forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                var button = form.querySelector('.news-follow-button');
+                var formData;
+
+                event.preventDefault();
+
+                if (!button || button.disabled) {
+                    return;
+                }
+
+                button.disabled = true;
+                formData = new window.FormData(form);
+
+                window.fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken') || '',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                    .then(function (response) {
+                        return response.json().then(function (payload) {
+                            if (!response.ok) {
+                                throw payload;
+                            }
+
+                            return payload;
+                        });
+                    })
+                    .then(function (payload) {
+                        renderFollowButton(button, payload.is_following);
+
+                        if (window.Fiscalia && typeof window.Fiscalia.showToast === 'function' && payload.message) {
+                            window.Fiscalia.showToast(payload.message, 'success');
+                        }
+                    })
+                    .catch(function (errorPayload) {
+                        if (window.Fiscalia && typeof window.Fiscalia.showToast === 'function') {
+                            window.Fiscalia.showToast(
+                                (errorPayload && errorPayload.message) || 'NÃ£o foi possÃ­vel atualizar o acompanhamento agora.',
+                                'error'
+                            );
+                        }
+                    })
+                    .finally(function () {
+                        button.disabled = false;
+                    });
+            });
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -104,6 +192,7 @@
             });
         }
 
+        setupFollowForms();
         updateSelectionState();
     });
 }());
