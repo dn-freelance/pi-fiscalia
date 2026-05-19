@@ -1,6 +1,7 @@
 .tags-page {
   margin: 0 auto;
-  max-width: 896px;
+  max-width: 72rem;
+  padding: 32px;
   width: 100%;
 }
 
@@ -38,8 +39,9 @@
 
 .tags-title {
   color: var(--text-main);
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 700;
+  letter-spacing: -0.03em;
   margin-bottom: 8px;
 }
 
@@ -242,6 +244,16 @@
 @media (max-width: 900px) {
   .tags-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .tags-page {
+    padding: 24px;
+  }
+
+  .tags-title {
+    font-size: 26px;
   }
 }
 

@@ -1,6 +1,7 @@
 .news-page {
   margin: 0 auto;
-  max-width: 980px;
+  max-width: 72rem;
+  padding: 32px;
   width: 100%;
 }
 
@@ -14,8 +15,9 @@
 
 .news-title {
   color: var(--text-main);
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 700;
+  letter-spacing: -0.03em;
   margin-bottom: 8px;
 }
 
@@ -554,6 +556,10 @@
 }
 
 @media (max-width: 720px) {
+  .news-page {
+    padding: 24px;
+  }
+
   .news-header,
   .news-card-header,
   .news-card-footer {
@@ -563,6 +569,10 @@
 
   .news-card-title {
     font-size: 22px;
+  }
+
+  .news-title {
+    font-size: 26px;
   }
 
   .news-card-date {
